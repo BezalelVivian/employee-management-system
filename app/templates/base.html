@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
+    <title>{{ title or 'EMS' }} · EMS</title>
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', path='css/style.css') }}"
+    >
+</head>
+
+<body>
+
+    {% set p = request.url.path %}
+
+    <div class="app">
+
+        <!-- Mobile overlay -->
+        <div
+            class="scrim"
+            id="scrim"
+            aria-hidden="true"
+        ></div>
+
+
+        <!-- =========================
+             SIDEBAR / MOBILE DRAWER
+             ========================= -->
+        <aside
+            class="sidebar"
+            id="sidebar"
+            aria-label="Main navigation"
+        >
+
+            <!-- Brand -->
+            <div class="brand">
+
+                <span class="brand-mark">
+                    E
+                </span>
+
+                <div>
+                    <b>EMS</b>
+                    <small>Employment Management</small>
+                </div>
+
+            </div>
+
+
+            <!-- Navigation -->
+            <nav>
+
+                {% if request.session.get('role') == 'admin' %}
+
+                    <!-- Admin Dashboard -->
+                    <a
+                        href="/admin"
+                        class="{{ 'active' if p == '/admin' }}"
+                    >
+                        <i class="fa-solid fa-chart-pie"></i>
+                        Dashboard
+                    </a>
+
+
+                    <!-- Employees -->
+                    <a
+                        href="/admin/employees"
+                        class="{{ 'active' if p.startswith('/admin/employees') }}"
+                    >
+                        <i class="fa-solid fa-users"></i>
+                        Employees
+                    </a>
+
+
+                    <!-- Attendance -->
+                    <a
+                        href="/admin/attendance"
+                        class="{{ 'active' if p.startswith('/admin/attendance') }}"
+                    >
+                        <i class="fa-solid fa-clock"></i>
+                        Attendance
+                    </a>
+
+
+                    <!-- Tasks -->
+                    <a
+                        href="/admin/tasks"
+                        class="{{ 'active' if p.startswith('/admin/tasks') }}"
+                    >
+                        <i class="fa-solid fa-list-check"></i>
+                        Tasks
+                    </a>
+
+
+                    <!-- Leave -->
+                    <a
+                        href="/admin/leave"
+                        class="{{ 'active' if p.startswith('/admin/leave') }}"
+                    >
+                        <i class="fa-solid fa-calendar-days"></i>
+                        Leave
+                    </a>
+
+
+                    <!-- Edit Requests -->
+                    <a
+                        href="/admin/edit-requests"
+                        class="{{ 'active' if p.startswith('/admin/edit-requests') }}"
+                    >
+                        <i class="fa-solid fa-code-branch"></i>
+                        Edit Requests
+                    </a>
+
+
+                {% else %}
+
+                    <!-- Employee Dashboard -->
+                    <a
+                        href="/dashboard"
+                        class="{{ 'active' if p == '/dashboard' }}"
+                    >
+                        <i class="fa-solid fa-house"></i>
+                        Dashboard
+                    </a>
+
+
+                    <!-- Profile -->
+                    <a
+                        href="/profile"
+                        class="{{ 'active' if p.startswith('/profile') }}"
+                    >
+                        <i class="fa-solid fa-user"></i>
+                        My Profile
+                    </a>
+
+
+                    <!-- Attendance -->
+                    <a
+                        href="/attendance"
+                        class="{{ 'active' if p.startswith('/attendance') }}"
+                    >
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        Attendance
+                    </a>
+
+
+                    <!-- Tasks -->
+                    <a
+                        href="/tasks"
+                        class="{{ 'active' if p.startswith('/tasks') }}"
+                    >
+                        <i class="fa-solid fa-list-check"></i>
+                        Tasks
+                    </a>
+
+
+                    <!-- Leave -->
+                    <a
+                        href="/leave"
+                        class="{{ 'active' if p.startswith('/leave') }}"
+                    >
+                        <i class="fa-solid fa-calendar-days"></i>
+                        Leave
+                    </a>
+
+                {% endif %}
+
+            </nav>
+
+
+            <!-- Logout -->
+            <div class="sidebar-bottom">
+
+                <form
+                    method="post"
+                    action="/logout"
+                >
+
+                    <input
+                        type="hidden"
+                        name="csrf"
+                        value="{{ csrf }}"
+                    >
+
+                    <button
+                        class="logout"
+                        type="submit"
+                    >
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                        Logout
+                    </button>
+
+                </form>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =========================
+             MAIN CONTENT
+             ========================= -->
+        <main class="main">
+
+
+            <!-- Topbar -->
+            <header class="topbar">
+
+
+                <!-- Mobile menu button -->
+                <button
+                    class="menu-btn"
+                    id="menuBtn"
+                    type="button"
+                    aria-label="Open menu"
+                    aria-controls="sidebar"
+                    aria-expanded="false"
+                >
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+
+
+                <!-- Page title -->
+                <div class="topbar-title">
+
+                    <span class="eyebrow">
+                        Employment Management System
+                    </span>
+
+                    <h1>
+                        {{ title }}
+                    </h1>
+
+                </div>
+
+
+                <!-- Right side -->
+                <div class="top-actions">
+
+                    <div
+                        class="live-clock"
+                        id="liveClock"
+                    >
+                        --:--:--
+                    </div>
+
+
+                    <div class="avatar">
+                        {{ (employee.name if employee else 'A')[0] | upper }}
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <!-- =========================
+                 FLASH / TOAST MESSAGE
+                 ========================= -->
+
+            {% if request.query_params.get('msg') %}
+
+                <div
+                    class="toast {{ request.query_params.get('kind', 'success') }}"
+                    id="toast"
+                    role="status"
+                    aria-live="polite"
+                >
+                    {{ request.query_params.get('msg') }}
+                </div>
+
+            {% endif %}
+
+
+            <!-- =========================
+                 PAGE CONTENT
+                 ========================= -->
+
+            {% block content %}
+            {% endblock %}
+
+
+        </main>
+
+    </div>
+
+
+    <!-- JavaScript -->
+    <script src="{{ url_for('static', path='js/app.js') }}"></script>
+
+</body>
+
+</html>
