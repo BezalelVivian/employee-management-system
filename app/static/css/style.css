@@ -1411,7 +1411,7 @@ tbody tr:hover { background: #f7fdf7; }
     radial-gradient(circle at 80% 80%, rgba(191, 240, 191, 0.4), transparent 30%),
     #f7fdf7;
 }
-/* ===== SIDEBAR: solid #32CD32 ===== */
+/* ===== SIDEBAR: solid #32CD32 ======== */
 .sidebar {
   background: #23a123;
   border-right: none;
