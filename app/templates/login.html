@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+
+    <title>Login · EMS</title>
+
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+    />
+
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', path='css/style.css') }}"
+    />
+  </head>
+
+  <body class="login-page">
+
+    {% if request.query_params.get('msg') %}
+      <div
+        class="toast {{ request.query_params.get('kind', 'success') }}"
+        id="toast"
+        role="status"
+        aria-live="polite"
+      >
+        {{ request.query_params.get('msg') }}
+      </div>
+    {% endif %}
+
+    <div class="login-card">
+
+      <div class="brand center">
+        <span class="brand-mark">E</span>
+
+        <div>
+          <b>EMS</b>
+          <small>Employment Management System</small>
+        </div>
+      </div>
+
+      <h1>Welcome back</h1>
+
+      <p class="muted">
+        Sign in to continue to your workspace.
+      </p>
+
+      <form method="post" action="/login" class="stack">
+
+        <input
+          type="hidden"
+          name="csrf"
+          value="{{ csrf }}"
+        />
+
+        <label>
+          Email
+
+          <input
+            type="email"
+            name="email"
+            required
+            autocomplete="username"
+            placeholder="Enter your email"
+          />
+        </label>
+
+        <label>
+          Password
+
+          <input
+            type="password"
+            name="password"
+            required
+            autocomplete="current-password"
+            placeholder="Enter your password"
+          />
+        </label>
+
+        <button
+          class="btn primary full"
+          type="submit"
+        >
+          <i class="fa-solid fa-right-to-bracket"></i>
+          Sign in
+        </button>
+
+      </form>
+
+      <div class="login-note">
+        Admin credentials are configured through environment variables.
+      </div>
+
+    </div>
+
+    <script src="{{ url_for('static', path='js/app.js') }}"></script>
+
+  </body>
+</html>

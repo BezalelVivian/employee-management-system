@@ -1,0 +1,52 @@
+{% extends 'base.html' %}{% block content %}
+<section class="hero">
+  <div>
+    <p class="eyebrow">Administration</p>
+    <h2>Workforce overview</h2>
+    <p class="muted">
+      Monitor employee activity, attendance, tasks and leave from one place.
+    </p>
+  </div>
+</section>
+<div class="grid four">
+  <div class="stat">
+    <span>Total Employees</span><strong>{{ total }}</strong
+    ><i class="fa-solid fa-users"></i>
+  </div>
+  <div class="stat">
+    <span>Active Employees</span><strong>{{ active }}</strong
+    ><i class="fa-solid fa-user-check"></i>
+  </div>
+  <div class="stat">
+    <span>Present Today</span><strong>{{ present }}</strong
+    ><i class="fa-solid fa-clock"></i>
+  </div>
+  <div class="stat">
+    <span>Absent Today</span><strong>{{ absent }}</strong
+    ><i class="fa-solid fa-user-xmark"></i>
+  </div>
+</div>
+<div class="grid two">
+  <div class="stat large">
+    <span>Pending Leave Requests</span><strong>{{ pending_leaves }}</strong
+    ><a class="text-link" href="/admin/leave?status=Pending">Review leave →</a>
+  </div>
+  <div class="stat large">
+    <span>Pending Task Reviews</span><strong>{{ pending_tasks }}</strong
+    ><a class="text-link" href="/admin/tasks?status=Pending">Review tasks →</a>
+  </div>
+</div>
+<section class="panel">
+  <div class="panel-head">
+    <div>
+      <h3>Departments</h3>
+      <p class="muted">Current department structure.</p>
+    </div>
+  </div>
+  <div class="chip-list">
+    {% for d in departments %}<span class="chip"
+      >{{ d.name }} · {{ d.employees|length }}</span
+    >{% endfor %}
+  </div>
+</section>
+{% endblock %}
