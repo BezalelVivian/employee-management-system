@@ -290,11 +290,37 @@ def next_id_optional(sheet_name: str, id_col: str = "ID") -> str:
     return str(max_id + 1)
 
 
+# Cell values starting with one of these characters are interpreted as a
+# FORMULA by Google Sheets (and by Excel/LibreOffice if the sheet is ever
+# exported) — the exact same way as if someone typed it into a cell by hand.
+# Nearly every "table" here stores free text an employee typed directly
+# (task descriptions, leave reasons, remarks, addresses, names), so without
+# this, a leave "reason" of e.g. `=HYPERLINK("http://evil.example","urgent")`
+# would land as a live, clickable formula the instant an admin opens the
+# spreadsheet directly — not as inert text. This is the well-known
+# "CSV/formula injection" vulnerability class (CWE-1236).
+_FORMULA_TRIGGER_CHARS = ("=", "+", "-", "@")
+
+
+def _sanitize_cell(value: str) -> str:
+    """Neutralize a value that would otherwise be parsed as a formula.
+
+    Prefixing with a leading apostrophe is the standard mitigation: Sheets
+    (under USER_ENTERED, the same parsing mode as typing into the UI) treats
+    a leading `'` as a "force text" marker, not as part of the cell's value —
+    so this changes nothing about what the app reads back, it only stops the
+    spreadsheet itself from ever evaluating the content as a formula.
+    """
+    if value and value[0] in _FORMULA_TRIGGER_CHARS:
+        return "'" + value
+    return value
+
+
 def append_row(sheet_name: str, row_dict: dict[str, Any]) -> None:
     """Append a new row. Missing headers are written as empty strings; extra keys
     in row_dict that don't match a header are ignored."""
     headers = get_headers(sheet_name)
-    values = [str(row_dict.get(h, "")) for h in headers]
+    values = [_sanitize_cell(str(row_dict.get(h, ""))) for h in headers]
     request = _values().append(
         spreadsheetId=SPREADSHEET_ID,
         range=sheet_name,
@@ -326,7 +352,7 @@ def update_row(sheet_name: str, id_value: Any, updates: dict[str, Any], id_col: 
         else:
             logger.warning("update_row: '%s' is not a header in '%s', ignoring", k, sheet_name)
 
-    values = [str(merged[h]) for h in headers]
+    values = [_sanitize_cell(str(merged[h])) for h in headers]
     range_ = f"{sheet_name}!A{row_number}:{_col_letter(len(headers))}{row_number}"
     request = _values().update(
         spreadsheetId=SPREADSHEET_ID,

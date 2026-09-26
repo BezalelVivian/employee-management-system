@@ -3,10 +3,10 @@ import { api } from '../../api/client'
 import StatusPill from '../../components/StatusPill'
 import Modal from '../../components/Modal'
 
-const ADMIN_STATUS_OPTIONS = ['Pending', 'Approved', 'Needs Changes', 'Rejected']
+const STATUS_OPTIONS = ['Pending', 'Approved', 'Rejected']
 
-export default function TaskReview() {
-  const [tasks, setTasks] = useState([])
+export default function LeaveReview() {
+  const [leaves, setLeaves] = useState([])
   const [error, setError] = useState('')
   const [reviewing, setReviewing] = useState(null)
   const [status, setStatus] = useState('Approved')
@@ -17,20 +17,20 @@ export default function TaskReview() {
   const load = useCallback(async () => {
     try {
       setError('')
-      const data = await api.get('/api/admin/tasks')
+      const data = await api.get('/api/admin/leaves')
       // Pending reviews first, so the admin's queue isn't buried under old ones.
-      data.sort((a, b) => (a.AdminStatus === 'Pending') === (b.AdminStatus === 'Pending') ? 0 : a.AdminStatus === 'Pending' ? -1 : 1)
-      setTasks(data)
+      data.sort((a, b) => (a.Status === 'Pending') === (b.Status === 'Pending') ? 0 : a.Status === 'Pending' ? -1 : 1)
+      setLeaves(data)
     } catch (err) { setError(err.message) }
   }, [])
 
   useEffect(() => { load() }, [load])
 
-  function openReview(task) {
-    setStatus(task.AdminStatus === 'Pending' ? 'Approved' : task.AdminStatus)
-    setRemarks(task.AdminRemarks || '')
+  function openReview(leave) {
+    setStatus(leave.Status === 'Pending' ? 'Approved' : leave.Status)
+    setRemarks(leave.AdminRemarks || '')
     setReviewError('')
-    setReviewing(task)
+    setReviewing(leave)
   }
 
   async function handleSubmit(e) {
@@ -38,7 +38,7 @@ export default function TaskReview() {
     setSaving(true)
     setReviewError('')
     try {
-      await api.patch(`/api/admin/tasks/${reviewing.ID}/review`, { admin_status: status, admin_remarks: remarks })
+      await api.patch(`/api/admin/leaves/${reviewing.ID}/review`, { status, admin_remarks: remarks })
       setReviewing(null)
       await load()
     } catch (err) {
@@ -50,26 +50,26 @@ export default function TaskReview() {
 
   return (
     <div>
-      <div className="page-header"><h1>Task Review</h1></div>
+      <div className="page-header"><h1>Leave Review</h1></div>
       {error && <div className="banner banner-error">{error}</div>}
 
       <div className="panel">
         <div className="table-wrap">
-          {tasks.length ? (
+          {leaves.length ? (
             <table>
-              <thead><tr><th>Employee</th><th>Client</th><th>Project</th><th>Date</th><th>Priority</th><th>Review status</th><th></th></tr></thead>
+              <thead><tr><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Reason</th><th>Status</th><th></th></tr></thead>
               <tbody>
-                {tasks.map((t) => (
-                  <tr key={t.ID}>
-                    <td>{t.EmployeeName}</td>
-                    <td>{t.ClientName}</td>
-                    <td>{t.ProjectName}</td>
-                    <td>{t.TaskDate}</td>
-                    <td>{t.Priority}</td>
-                    <td><StatusPill status={t.AdminStatus} /></td>
+                {leaves.map((l) => (
+                  <tr key={l.ID}>
+                    <td>{l.EmployeeName}</td>
+                    <td>{l.LeaveType}</td>
+                    <td>{l.FromDate}</td>
+                    <td>{l.ToDate}</td>
+                    <td>{l.Reason}</td>
+                    <td><StatusPill status={l.Status} /></td>
                     <td>
-                      <button className="btn btn-secondary btn-sm" onClick={() => openReview(t)}>
-                        {t.AdminStatus === 'Pending' ? 'Review' : 'Edit review'}
+                      <button className="btn btn-secondary btn-sm" onClick={() => openReview(l)}>
+                        {l.Status === 'Pending' ? 'Review' : 'Edit review'}
                       </button>
                     </td>
                   </tr>
@@ -77,20 +77,23 @@ export default function TaskReview() {
               </tbody>
             </table>
           ) : (
-            <div className="table-empty">No tasks submitted yet.</div>
+            <div className="table-empty">No leave requests submitted yet.</div>
           )}
         </div>
       </div>
 
       {reviewing && (
-        <Modal title={`Review: ${reviewing.ProjectName}`} onClose={() => setReviewing(null)}>
+        <Modal title={`Review: ${reviewing.LeaveType}`} onClose={() => setReviewing(null)}>
           {reviewError && <div className="banner banner-error">{reviewError}</div>}
-          <p style={{ fontSize: 14 }}>{reviewing.Description}</p>
+          <p style={{ fontSize: 14 }}>
+            {reviewing.EmployeeName} · {reviewing.FromDate} to {reviewing.ToDate}
+            {reviewing.Reason ? <> — "{reviewing.Reason}"</> : null}
+          </p>
           <form onSubmit={handleSubmit}>
             <div className="field">
               <label>Decision</label>
               <select value={status} onChange={(e) => setStatus(e.target.value)}>
-                {ADMIN_STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
+                {STATUS_OPTIONS.map((s) => <option key={s}>{s}</option>)}
               </select>
             </div>
             <div className="field">

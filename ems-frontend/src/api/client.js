@@ -46,7 +46,12 @@ async function request(path, { method = 'GET', body, params, auth = true } = {})
     throw new ApiError('Could not reach the server. Check your connection and try again.', 0)
   }
 
-  if (res.status === 401) {
+  // Only treat a 401 as "your session died" for requests that were actually
+  // sending a token (auth: true). The login endpoint itself legitimately
+  // returns 401 for a wrong password — that's a normal login failure, not an
+  // expired session, and must not clear the token or redirect away from the
+  // login page the user is already on.
+  if (res.status === 401 && auth) {
     clearToken()
     window.location.href = '/login'
     throw new ApiError('Session expired, please log in again', 401)

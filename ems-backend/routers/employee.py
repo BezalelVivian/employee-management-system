@@ -3,7 +3,7 @@ from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from auth import get_current_user, hash_password, verify_password
+from auth import create_access_token, get_current_user, get_token_version, hash_password, verify_password
 from models import ProfileUpdate, TaskCreate, TaskUpdate, LeaveCreate, PasswordChange
 from sheets_client import (
     all_rows, find_by_id, find_one, find_all, find_all_optional,

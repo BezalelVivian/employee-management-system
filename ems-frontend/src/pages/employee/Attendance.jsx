@@ -39,6 +39,9 @@ export default function Attendance() {
               <option>Present</option>
               <option>Late</option>
               <option>Absent</option>
+              <option>On Leave</option>
+              <option>Holiday</option>
+              <option>Weekly Off</option>
             </select>
           </div>
         </div>

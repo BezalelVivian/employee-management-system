@@ -40,7 +40,11 @@ export default function Profile() {
     setError('')
     setMessage('')
     try {
-      await api.put('/api/employee/profile', form)
+      // The backend's dob field is Optional[date]: it accepts a real date or
+      // null, but rejects an empty string as an invalid date. Coerce '' to
+      // null so saving phone/address still works for anyone without a DOB
+      // on file yet.
+      await api.put('/api/employee/profile', { ...form, dob: form.dob || null })
       setMessage('Profile updated.')
     } catch (err) {
       setError(err.message)

@@ -30,13 +30,27 @@ def verify_password(plain: str, hashed: str) -> bool:
         return False
 
 
-def create_access_token(*, email: str, role: str, employee_id: str, employee_name: str) -> str:
+def get_token_version(user: dict) -> int:
+    """Read the Users sheet's TokenVersion column as an int, treating a blank,
+    missing, or garbage value as 0. This makes the column optional/backward
+    compatible: rows created before it existed (or a spreadsheet that never
+    added it) just behave as version 0 forever, so nothing breaks — the
+    invalidation feature below simply won't do anything for those rows until
+    the column is added and starts getting bumped."""
+    raw = str(user.get("TokenVersion", "")).strip()
+    return int(raw) if raw.isdigit() else 0
+
+
+def create_access_token(
+    *, email: str, role: str, employee_id: str, employee_name: str, token_version: int = 0
+) -> str:
     now = datetime.now(timezone.utc)
     payload = {
         "sub": email,
         "role": role,
         "employee_id": employee_id,
         "employee_name": employee_name,
+        "tv": token_version,
         "iat": now,
         "exp": now + timedelta(minutes=JWT_EXPIRE_MINUTES),
     }
@@ -70,16 +84,45 @@ def get_current_user(
     try:
         user = find_one("Users", "Email", payload["sub"])
     except SheetError:
-        # If Sheets itself is unreachable, fail closed on the safety check but don't
-        # brick the whole app over a transient blip elsewhere — treat as active and
-        # let the actual route's own Sheets calls surface the real error if it's
+        # Sheets itself is unreachable — don't brick the whole app over a
+        # transient blip elsewhere. Skip the liveness check for this request
+        # and let the route's own Sheets calls surface the real error if it's
         # still down.
-        user = None
+        return {
+            "email": payload["sub"],
+            "role": payload["role"],
+            "employee_id": payload.get("employee_id") or "",
+            "employee_name": payload.get("employee_name") or "",
+        }
 
-    if user is not None and str(user.get("IsActive", "")).strip().upper() not in ("TRUE", "1", "YES"):
+    # This is different from the case above: the sheet WAS reachable and the
+    # row is genuinely gone (or explicitly deactivated). Either way, a token
+    # for an account that no longer exists must not keep working for up to
+    # JWT_EXPIRE_MINUTES just because deleting the row (instead of setting
+    # IsActive=FALSE) is a less common way to remove someone.
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="This account no longer exists",
+        )
+    if str(user.get("IsActive", "")).strip().upper() not in ("TRUE", "1", "YES"):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="This account has been deactivated",
+        )
+
+    # A JWT proves who logged in and when, but says nothing about whether the
+    # password used to get it is still the current one. Without this check, a
+    # stolen token — or a token from a device someone meant to sign out of —
+    # would keep working for up to JWT_EXPIRE_MINUTES even after a password
+    # change or an admin-triggered reset, which is exactly the moment you
+    # most want old sessions to die. `tv` is stamped into the token at login;
+    # changing/resetting a password bumps TokenVersion in the sheet, so any
+    # token minted before that no longer matches and is rejected here.
+    if get_token_version(user) != payload.get("tv", 0):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Your password was changed — please log in again",
         )
 
     return {
