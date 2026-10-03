@@ -1,8 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-<<<<<<< HEAD
 import { fmtDate } from '../../utils/time'
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 import { api } from '../../api/client'
 import StatusPill from '../../components/StatusPill'
 import Modal from '../../components/Modal'
@@ -65,11 +62,7 @@ export default function TaskReview() {
                     <td>{t.EmployeeName}</td>
                     <td>{t.ClientName}</td>
                     <td>{t.ProjectName}</td>
-<<<<<<< HEAD
                     <td>{fmtDate(t.TaskDate)}</td>
-=======
-                    <td>{t.TaskDate}</td>
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
                     <td>{t.Priority}</td>
                     <td><StatusPill status={t.AdminStatus} /></td>
                     <td><button className="btn btn-secondary btn-sm" onClick={() => openReview(t)}>Review</button></td>

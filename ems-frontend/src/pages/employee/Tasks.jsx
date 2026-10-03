@@ -1,9 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
-<<<<<<< HEAD
 import DateInput from '../../components/DateInput'
 import { todayLocalISO, fmtDate } from '../../utils/time'
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../../api/client'
 import StatusPill from '../../components/StatusPill'
@@ -14,11 +11,7 @@ const PRIORITY_OPTIONS = ['Low', 'Medium', 'High', 'Urgent']
 
 const emptyForm = {
   clientName: '', projectName: '', description: '', status: 'Pending',
-<<<<<<< HEAD
   priority: 'Medium', remarks: '', taskDate: todayLocalISO(),
-=======
-  priority: 'Medium', remarks: '', taskDate: new Date().toISOString().slice(0, 10),
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 }
 
 export default function Tasks() {
@@ -133,11 +126,7 @@ export default function Tasks() {
                   <tr key={t.id}>
                     <td>{t.clientName}</td>
                     <td>{t.projectName}</td>
-<<<<<<< HEAD
                     <td>{fmtDate(t.taskDate)}</td>
-=======
-                    <td>{t.taskDate}</td>
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
                     <td><StatusPill status={t.status} /></td>
                     <td>{t.priority}</td>
                     <td><StatusPill status={t.adminStatus} /></td>
@@ -185,11 +174,7 @@ export default function Tasks() {
               </div>
               <div className="field">
                 <label>Date</label>
-<<<<<<< HEAD
                 <DateInput required value={form.taskDate} onChange={(e) => setForm({ ...form, taskDate: e.target.value })} />
-=======
-                <input type="date" required value={form.taskDate} onChange={(e) => setForm({ ...form, taskDate: e.target.value })} />
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
               </div>
             </div>
             <div className="field">

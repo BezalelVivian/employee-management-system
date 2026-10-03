@@ -1,10 +1,7 @@
 """Pydantic schemas for request bodies and API responses, shared across routers."""
 import re
 from datetime import date
-<<<<<<< HEAD
 from datetime import date as _date
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field, field_validator
@@ -66,7 +63,6 @@ class ProfileUpdate(BaseModel):
         return v
 
 
-<<<<<<< HEAD
 # ---------- Profile photo ----------
 
 PHOTO_PREFIX = "data:image/jpeg;base64,"
@@ -96,8 +92,6 @@ class PhotoUpload(BaseModel):
         return v
 
 
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 # ---------- Password ----------
 
 class PasswordChange(BaseModel):
@@ -117,7 +111,6 @@ class AttendanceFilters(BaseModel):
     status: Optional[str] = None
 
 
-<<<<<<< HEAD
 _HHMM_RE = re.compile(r"^([01]\d|2[0-3]):[0-5]\d$")
 
 
@@ -154,8 +147,6 @@ class AttendanceEdit(BaseModel):
         return v
 
 
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 # ---------- Tasks ----------
 
 VALID_TASK_STATUS = {"Pending", "In Progress", "Completed"}
@@ -271,12 +262,8 @@ class EmployeeAdminUpdate(BaseModel):
     designation: Optional[str] = None
     department_id: Optional[str] = None
     role_title: Optional[str] = None
-<<<<<<< HEAD
     joined_date: Optional[date] = None
 
 class HolidayCreate(BaseModel):
     date: _date
     name: str
-=======
-    joined_date: Optional[date] = None
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6

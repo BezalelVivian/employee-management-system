@@ -76,10 +76,7 @@ export const api = {
   post: (path, body) => request(path, { method: 'POST', body }),
   put: (path, body) => request(path, { method: 'PUT', body }),
   patch: (path, body) => request(path, { method: 'PATCH', body }),
-<<<<<<< HEAD
   del: (path) => request(path, { method: 'DELETE' }),
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
   login: (body) => request('/api/auth/login', { method: 'POST', body, auth: false }),
 }
 

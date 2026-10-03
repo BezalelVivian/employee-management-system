@@ -11,10 +11,7 @@ Design notes:
   the free quota and keep latency predictable.
 """
 import logging
-<<<<<<< HEAD
 import re
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 import socket
 import ssl
 import threading
@@ -28,10 +25,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
 from config import SPREADSHEET_ID, get_service_account_info
-<<<<<<< HEAD
 from utils import normalize_date, normalize_datetime
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 logger = logging.getLogger("ems.sheets")
 
@@ -67,7 +61,6 @@ _sheet_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
 _sheet_cache_lock = threading.Lock()
 
 
-<<<<<<< HEAD
 # Columns that hold dates / datetimes. Google Sheets may convert these cells into real dates
 # and return them in the sheet's display format ("9/26/2026 9:15:00"), so every read converts
 # them back to canonical ISO strings. Everything above this layer only ever sees ISO.
@@ -107,8 +100,6 @@ def _canon_header(h: Any) -> str:
     return _CANON.get(re.sub(r"[^a-z0-9]", "", h.lower()), h)
 
 
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 class SheetError(Exception):
     """Raised for any problem reading/writing the spreadsheet (missing sheet, empty
     header row, etc.) so routers can turn it into a clean HTTP error."""
@@ -203,11 +194,7 @@ def _read_sheet_uncached(sheet_name: str) -> list[dict[str, Any]]:
             f"Sheet '{sheet_name}' is empty — it needs at least a header row."
         )
 
-<<<<<<< HEAD
     headers = [_canon_header(h) for h in values[0]]
-=======
-    headers = values[0]
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     if not any(h.strip() for h in headers):
         raise SheetError(f"Sheet '{sheet_name}' has a blank header row.")
 
@@ -216,24 +203,17 @@ def _read_sheet_uncached(sheet_name: str) -> list[dict[str, Any]]:
         padded = raw_row + [""] * (len(headers) - len(raw_row))
         row = {headers[j]: padded[j] for j in range(len(headers))}
         row["_row_number"] = i  # internal bookkeeping, not written back to the sheet
-<<<<<<< HEAD
         for col in DATE_COLUMNS.get(sheet_name, ()):
             if row.get(col):
                 row[col] = normalize_date(row[col])
         for col in DATETIME_COLUMNS.get(sheet_name, ()):
             if row.get(col):
                 row[col] = normalize_datetime(row[col])
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
         rows.append(row)
     return rows
 
 
-<<<<<<< HEAD
 def all_rows(sheet_name: str, fresh: bool = False) -> list[dict[str, Any]]:
-=======
-def all_rows(sheet_name: str) -> list[dict[str, Any]]:
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     """
     Fetch every data row from `sheet_name` as a list of dicts keyed by header name.
     Raises SheetError if the sheet is missing or has no header row.
@@ -244,7 +224,6 @@ def all_rows(sheet_name: str) -> list[dict[str, Any]]:
     A short cache absorbs that without making data noticeably stale for an
     internal tool. Any write (append_row/update_row) invalidates the affected
     sheet's cache entry immediately, so you always see your own changes.
-<<<<<<< HEAD
 
     Pass fresh=True to skip the cache (used by check-in/out so a double click can't
     create two rows).
@@ -255,14 +234,6 @@ def all_rows(sheet_name: str) -> list[dict[str, Any]]:
             cached = _sheet_cache.get(sheet_name)
             if cached is not None and now - cached[0] < SHEET_CACHE_TTL_SECONDS:
                 return cached[1]
-=======
-    """
-    now = time.monotonic()
-    with _sheet_cache_lock:
-        cached = _sheet_cache.get(sheet_name)
-        if cached is not None and now - cached[0] < SHEET_CACHE_TTL_SECONDS:
-            return cached[1]
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
     rows = _read_sheet_uncached(sheet_name)
 
@@ -293,7 +264,6 @@ def get_holiday_dates() -> set[str]:
     return {str(r.get("Date", "")).strip() for r in rows if str(r.get("Date", "")).strip()}
 
 
-<<<<<<< HEAD
 def get_department_names() -> dict[str, str]:
     """{department ID: department name} from the Departments sheet (columns: ID, Name, ...).
     Empty dict if the sheet is missing, so nothing breaks before it's set up."""
@@ -306,8 +276,6 @@ def get_department_names() -> dict[str, str]:
     return out
 
 
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 def find_all_optional(sheet_name: str, column: str, value: Any) -> list[dict[str, Any]]:
     """Like find_all, but returns [] instead of raising if the sheet doesn't exist yet."""
     target = str(value)
@@ -332,7 +300,6 @@ def get_headers(sheet_name: str) -> list[str]:
     values = result.get("values", [])
     if not values or not values[0]:
         raise SheetError(f"Sheet '{sheet_name}' has no header row.")
-<<<<<<< HEAD
     return [_canon_header(h) for h in values[0]]
 
 
@@ -346,29 +313,13 @@ def find_one(sheet_name: str, column: str, value: Any) -> Optional[dict[str, Any
     for row in all_rows(sheet_name):
         cell = str(row.get(column, "")).strip()
         if (cell.lower() if ci else cell) == target:
-=======
-    return values[0]
-
-
-def find_one(sheet_name: str, column: str, value: Any) -> Optional[dict[str, Any]]:
-    """Return the first row where row[column] == str(value), or None."""
-    target = str(value)
-    for row in all_rows(sheet_name):
-        if str(row.get(column, "")) == target:
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
             return row
     return None
 
 
-<<<<<<< HEAD
 def find_all(sheet_name: str, column: str, value: Any, fresh: bool = False) -> list[dict[str, Any]]:
     target = str(value)
     return [row for row in all_rows(sheet_name, fresh=fresh) if str(row.get(column, "")) == target]
-=======
-def find_all(sheet_name: str, column: str, value: Any) -> list[dict[str, Any]]:
-    target = str(value)
-    return [row for row in all_rows(sheet_name) if str(row.get(column, "")) == target]
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 
 def find_by_id(sheet_name: str, id_value: Any, id_col: str = "ID") -> Optional[dict[str, Any]]:
@@ -407,7 +358,6 @@ def next_id_optional(sheet_name: str, id_col: str = "ID") -> str:
     return str(max_id + 1)
 
 
-<<<<<<< HEAD
 # Writes use valueInputOption="RAW": the cell gets exactly the text we send. Two benefits over
 # USER_ENTERED: (1) "2026-09-26T09:15:00" stays text instead of being converted into a date
 # serial that comes back as "9/26/2026 9:15:00" (the cause of "Invalid Date" in the UI), and
@@ -415,51 +365,17 @@ def next_id_optional(sheet_name: str, id_col: str = "ID") -> str:
 # =HYPERLINK(...) into a leave reason can't inject a live formula into the spreadsheet
 # (CSV/formula injection, CWE-1236) -- no apostrophe-prefix workaround needed.
 WRITE_MODE = "RAW"
-=======
-# Cell values starting with one of these characters are interpreted as a
-# FORMULA by Google Sheets (and by Excel/LibreOffice if the sheet is ever
-# exported) — the exact same way as if someone typed it into a cell by hand.
-# Nearly every "table" here stores free text an employee typed directly
-# (task descriptions, leave reasons, remarks, addresses, names), so without
-# this, a leave "reason" of e.g. `=HYPERLINK("http://evil.example","urgent")`
-# would land as a live, clickable formula the instant an admin opens the
-# spreadsheet directly — not as inert text. This is the well-known
-# "CSV/formula injection" vulnerability class (CWE-1236).
-_FORMULA_TRIGGER_CHARS = ("=", "+", "-", "@")
-
-
-def _sanitize_cell(value: str) -> str:
-    """Neutralize a value that would otherwise be parsed as a formula.
-
-    Prefixing with a leading apostrophe is the standard mitigation: Sheets
-    (under USER_ENTERED, the same parsing mode as typing into the UI) treats
-    a leading `'` as a "force text" marker, not as part of the cell's value —
-    so this changes nothing about what the app reads back, it only stops the
-    spreadsheet itself from ever evaluating the content as a formula.
-    """
-    if value and value[0] in _FORMULA_TRIGGER_CHARS:
-        return "'" + value
-    return value
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 
 def append_row(sheet_name: str, row_dict: dict[str, Any]) -> None:
     """Append a new row. Missing headers are written as empty strings; extra keys
     in row_dict that don't match a header are ignored."""
     headers = get_headers(sheet_name)
-<<<<<<< HEAD
     values = [str(row_dict.get(h, "")) for h in headers]
     request = _values().append(
         spreadsheetId=SPREADSHEET_ID,
         range=sheet_name,
         valueInputOption=WRITE_MODE,
-=======
-    values = [_sanitize_cell(str(row_dict.get(h, ""))) for h in headers]
-    request = _values().append(
-        spreadsheetId=SPREADSHEET_ID,
-        range=sheet_name,
-        valueInputOption="USER_ENTERED",
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
         insertDataOption="INSERT_ROWS",
         body={"values": [values]},
     )
@@ -472,15 +388,11 @@ def update_row(sheet_name: str, id_value: Any, updates: dict[str, Any], id_col: 
     Find the row where id_col == id_value and overwrite just the given fields
     (leaving the rest of that row untouched). Returns False if no matching row exists.
     """
-<<<<<<< HEAD
     # Read fresh (not from the 8s cache): this merges `updates` into the row's CURRENT
     # values and writes the whole row back, so a stale copy could silently undo someone
     # else's change made a moment ago.
     target = str(id_value)
     row = next((r for r in all_rows(sheet_name, fresh=True) if str(r.get(id_col, "")) == target), None)
-=======
-    row = find_by_id(sheet_name, id_value, id_col=id_col)
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     if row is None:
         return False
 
@@ -495,20 +407,12 @@ def update_row(sheet_name: str, id_value: Any, updates: dict[str, Any], id_col: 
         else:
             logger.warning("update_row: '%s' is not a header in '%s', ignoring", k, sheet_name)
 
-<<<<<<< HEAD
     values = [str(merged[h]) for h in headers]
-=======
-    values = [_sanitize_cell(str(merged[h])) for h in headers]
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     range_ = f"{sheet_name}!A{row_number}:{_col_letter(len(headers))}{row_number}"
     request = _values().update(
         spreadsheetId=SPREADSHEET_ID,
         range=range_,
-<<<<<<< HEAD
         valueInputOption=WRITE_MODE,
-=======
-        valueInputOption="USER_ENTERED",
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
         body={"values": [values]},
     )
     _execute_with_retry(request, f"update row in '{sheet_name}'")
@@ -516,7 +420,6 @@ def update_row(sheet_name: str, id_value: Any, updates: dict[str, Any], id_col: 
     return True
 
 
-<<<<<<< HEAD
 def set_column_for_rows(sheet_name: str, id_col: str, ids: list, column: str, value: Any) -> int:
     """Set ONE column to `value` on every row whose id_col is in `ids`, using a single
     read plus a single batched write no matter how many rows match (update_row costs 3
@@ -542,8 +445,6 @@ def set_column_for_rows(sheet_name: str, id_col: str, ids: list, column: str, va
     return len(rows)
 
 
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 def _col_letter(n: int) -> str:
     """1 -> A, 26 -> Z, 27 -> AA, ..."""
     letters = ""

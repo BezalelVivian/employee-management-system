@@ -1,8 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-<<<<<<< HEAD
 import { fmtDate } from '../../utils/time'
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 import { api } from '../../api/client'
 import StatusPill from '../../components/StatusPill'
 import Modal from '../../components/Modal'
@@ -67,13 +64,8 @@ export default function LeaveReview() {
                   <tr key={l.ID}>
                     <td>{l.EmployeeName}</td>
                     <td>{l.LeaveType}</td>
-<<<<<<< HEAD
                     <td>{fmtDate(l.FromDate)}</td>
                     <td>{fmtDate(l.ToDate)}</td>
-=======
-                    <td>{l.FromDate}</td>
-                    <td>{l.ToDate}</td>
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
                     <td>{l.Reason}</td>
                     <td><StatusPill status={l.Status} /></td>
                     <td>
@@ -95,11 +87,7 @@ export default function LeaveReview() {
         <Modal title={`Review: ${reviewing.LeaveType}`} onClose={() => setReviewing(null)}>
           {reviewError && <div className="banner banner-error">{reviewError}</div>}
           <p style={{ fontSize: 14 }}>
-<<<<<<< HEAD
             {reviewing.EmployeeName} · {fmtDate(reviewing.FromDate)} to {fmtDate(reviewing.ToDate)}
-=======
-            {reviewing.EmployeeName} · {reviewing.FromDate} to {reviewing.ToDate}
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
             {reviewing.Reason ? <> — "{reviewing.Reason}"</> : null}
           </p>
           <form onSubmit={handleSubmit}>

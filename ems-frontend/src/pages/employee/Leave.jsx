@@ -1,9 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
-<<<<<<< HEAD
 import { fmtDate } from '../../utils/time'
 import DateInput from '../../components/DateInput'
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 import { useSearchParams } from 'react-router-dom'
 import { api } from '../../api/client'
 import StatusPill from '../../components/StatusPill'
@@ -81,19 +78,11 @@ export default function Leave() {
           </select>
           <div className="field" style={{ marginBottom: 0 }}>
             <label>From</label>
-<<<<<<< HEAD
             <DateInput value={filters.date_from} onChange={(e) => setFilters({ ...filters, date_from: e.target.value })} />
           </div>
           <div className="field" style={{ marginBottom: 0 }}>
             <label>To</label>
             <DateInput value={filters.date_to} onChange={(e) => setFilters({ ...filters, date_to: e.target.value })} />
-=======
-            <input type="date" value={filters.date_from} onChange={(e) => setFilters({ ...filters, date_from: e.target.value })} />
-          </div>
-          <div className="field" style={{ marginBottom: 0 }}>
-            <label>To</label>
-            <input type="date" value={filters.date_to} onChange={(e) => setFilters({ ...filters, date_to: e.target.value })} />
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
           </div>
           <button className="btn btn-primary" onClick={() => { setForm(emptyForm); setFormError(''); setShowForm(true) }}>Apply Leave</button>
         </div>
@@ -106,13 +95,8 @@ export default function Leave() {
                 {leaves.map((l) => (
                   <tr key={l.id}>
                     <td>{l.leaveType}</td>
-<<<<<<< HEAD
                     <td>{fmtDate(l.fromDate)}</td>
                     <td>{fmtDate(l.toDate)}</td>
-=======
-                    <td>{l.fromDate}</td>
-                    <td>{l.toDate}</td>
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
                     <td>{l.reason}</td>
                     <td><StatusPill status={l.status} /></td>
                     <td>{l.adminRemarks || '—'}</td>
@@ -139,19 +123,11 @@ export default function Leave() {
             <div className="field-row">
               <div className="field">
                 <label>From</label>
-<<<<<<< HEAD
                 <DateInput required value={form.fromDate} onChange={(e) => setForm({ ...form, fromDate: e.target.value })} />
               </div>
               <div className="field">
                 <label>To</label>
                 <DateInput required value={form.toDate} onChange={(e) => setForm({ ...form, toDate: e.target.value })} />
-=======
-                <input type="date" required value={form.fromDate} onChange={(e) => setForm({ ...form, fromDate: e.target.value })} />
-              </div>
-              <div className="field">
-                <label>To</label>
-                <input type="date" required value={form.toDate} onChange={(e) => setForm({ ...form, toDate: e.target.value })} />
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
               </div>
             </div>
             <div className="field">

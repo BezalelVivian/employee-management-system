@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """Time helpers and attendance rules.
 
 Storage format: attendance timestamps are ISO strings without timezone, in APP_TIMEZONE
@@ -41,31 +40,12 @@ def today_date() -> date:
 
 def today_str() -> str:
     return today_date().isoformat()
-=======
-"""Small time/formatting helpers. Attendance timestamps are stored as ISO datetime
-strings (e.g. "2026-09-26T09:15:00") in the CheckIn/CheckOut columns; AttendanceDate
-is stored as "YYYY-MM-DD"."""
-from datetime import datetime, date, time
-
-from config import LATE_CUTOFF_HOUR, LATE_CUTOFF_MINUTE
-
-ISO_FMT = "%Y-%m-%dT%H:%M:%S"
-
-
-def now() -> datetime:
-    return datetime.now()
-
-
-def today_str() -> str:
-    return date.today().isoformat()
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 
 def to_iso(dt: datetime) -> str:
     return dt.strftime(ISO_FMT)
 
 
-<<<<<<< HEAD
 # ---------- tolerant parsing (sheet cells are free text) ----------
 
 _DATETIME_FORMATS_ISO = ("%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M")
@@ -172,35 +152,10 @@ def worked_minutes(check_in: str, check_out: str, *, live_until: Optional[dateti
 def format_minutes(total_minutes: Optional[int]) -> Optional[str]:
     if total_minutes is None:
         return None
-=======
-def parse_iso(s: str) -> datetime | None:
-    if not s:
-        return None
-    try:
-        return datetime.strptime(s, ISO_FMT)
-    except ValueError:
-        return None
-
-
-def is_late(check_in_time: datetime) -> bool:
-    cutoff = time(LATE_CUTOFF_HOUR, LATE_CUTOFF_MINUTE)
-    return check_in_time.time() > cutoff
-
-
-def working_hours_str(check_in: str, check_out: str) -> str | None:
-    """Returns e.g. '7h 45m', or None if either timestamp is missing/unparsable."""
-    ci = parse_iso(check_in)
-    co = parse_iso(check_out)
-    if ci is None or co is None:
-        return None
-    delta = co - ci
-    total_minutes = max(0, int(delta.total_seconds() // 60))
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     hours, minutes = divmod(total_minutes, 60)
     return f"{hours}h {minutes}m"
 
 
-<<<<<<< HEAD
 def working_hours_str(check_in: str, check_out: str, *, live_until: Optional[datetime] = None) -> Optional[str]:
     """e.g. '7h 45m', or None if it can't be worked out."""
     return format_minutes(worked_minutes(check_in, check_out, live_until=live_until))
@@ -248,23 +203,3 @@ def is_working_day(d: date, holidays: Optional[set] = None) -> bool:
     if holidays and d.isoformat() in holidays:
         return False
     return d.weekday() not in WEEKLY_OFF_DAYS
-=======
-def parse_date_safe(s: str | None) -> date | None:
-    """Parse a 'YYYY-MM-DD' string into a date, returning None instead of raising
-    for blank/missing/malformed values (sheet cells are free-text, so this is never
-    guaranteed to be clean)."""
-    if not s:
-        return None
-    try:
-        return date.fromisoformat(str(s).strip())
-    except ValueError:
-        return None
-
-
-def is_working_day(d: date, holidays: set[str] | None = None) -> bool:
-    """True for a normal working day: Monday-Saturday, and not in the given set of
-    'YYYY-MM-DD' holiday strings. Sunday is the weekly off."""
-    if holidays and d.isoformat() in holidays:
-        return False
-    return d.weekday() != 6  # Monday=0 ... Sunday=6
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6

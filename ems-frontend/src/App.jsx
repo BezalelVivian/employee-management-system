@@ -12,17 +12,12 @@ import Leave from './pages/employee/Leave'
 
 import AdminDashboard from './pages/admin/Dashboard'
 import Employees from './pages/admin/Employees'
-<<<<<<< HEAD
 import AdminAttendance from './pages/admin/Attendance'
 import TaskReview from './pages/admin/TaskReview'
 import LeaveReview from './pages/admin/LeaveReview'
 import Holidays from './pages/admin/Holidays'
 import { ConfirmProvider } from './components/ConfirmDialog'
 import { ToastProvider } from './components/Toast'
-=======
-import TaskReview from './pages/admin/TaskReview'
-import LeaveReview from './pages/admin/LeaveReview'
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 function HomeRedirect() {
   const { user, isAuthenticated } = useAuth()
@@ -34,11 +29,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-<<<<<<< HEAD
         <ToastProvider>
         <ConfirmProvider>
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/" element={<HomeRedirect />} />
@@ -54,24 +46,16 @@ export default function App() {
           <Route element={<ProtectedRoute role="admin"><Layout /></ProtectedRoute>}>
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/employees" element={<Employees />} />
-<<<<<<< HEAD
             <Route path="/admin/attendance" element={<AdminAttendance />} />
             <Route path="/admin/tasks" element={<TaskReview />} />
             <Route path="/admin/leaves" element={<LeaveReview />} />
             <Route path="/admin/holidays" element={<Holidays />} />
-=======
-            <Route path="/admin/tasks" element={<TaskReview />} />
-            <Route path="/admin/leaves" element={<LeaveReview />} />
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
           </Route>
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-<<<<<<< HEAD
         </ConfirmProvider>
         </ToastProvider>
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
       </AuthProvider>
     </BrowserRouter>
   )

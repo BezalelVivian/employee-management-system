@@ -10,7 +10,6 @@ Required env vars (set these on Render for the backend):
                                    e.g. "https://your-app.vercel.app,http://localhost:5173"
 
 Optional:
-<<<<<<< HEAD
     JWT_EXPIRE_MINUTES           - access token lifetime in minutes (default 30 days)
     APP_TIMEZONE                 - IANA timezone used for "today" and check-in/out times
                                    (default "Asia/Kolkata"; Render servers run in UTC, so this matters)
@@ -26,11 +25,6 @@ check-in / check-out and works out the hours):
     LATE_CUTOFF_HOUR / LATE_CUTOFF_MINUTE - the cutoff, local time (default 10:00). Only used if enabled.
     HALF_DAY_HOURS               - worked hours below this on a finished day show "Half Day" (default 0 = off)
     FULL_DAY_HOURS               - worked hours below this (but above half-day) show "Short Hours" (default 0 = off)
-=======
-    JWT_EXPIRE_MINUTES           - access token lifetime in minutes (default 60)
-    LATE_CUTOFF_HOUR             - hour (24h, local time) after which check-in is "Late" (default 9)
-    LATE_CUTOFF_MINUTE           - minute component of the late cutoff (default 30)
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 """
 import os
 import json
@@ -59,7 +53,6 @@ JWT_ALGORITHM = "HS256"
 # stricter session expiry later.
 JWT_EXPIRE_MINUTES = int(os.environ.get("JWT_EXPIRE_MINUTES", str(60 * 24 * 30)))
 
-<<<<<<< HEAD
 def _bool_env(name: str, default: bool = False) -> bool:
     return os.environ.get(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
 
@@ -86,10 +79,6 @@ LATE_CUTOFF_MINUTE = int(os.environ.get("LATE_CUTOFF_MINUTE", "0"))
 # 0 = rule disabled.
 HALF_DAY_HOURS = _float_env("HALF_DAY_HOURS", 0)
 FULL_DAY_HOURS = _float_env("FULL_DAY_HOURS", 0)
-=======
-LATE_CUTOFF_HOUR = int(os.environ.get("LATE_CUTOFF_HOUR", "9"))
-LATE_CUTOFF_MINUTE = int(os.environ.get("LATE_CUTOFF_MINUTE", "30"))
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 CORS_ORIGINS = [
     origin.strip()

@@ -41,7 +41,6 @@ def get_token_version(user: dict) -> int:
     return int(raw) if raw.isdigit() else 0
 
 
-<<<<<<< HEAD
 def next_token_version(user: dict) -> int:
     """The TokenVersion to store on a password change/reset. Only bumps if the Users sheet
     actually HAS a TokenVersion column -- without one, the bump can't be saved, and a token
@@ -50,8 +49,6 @@ def next_token_version(user: dict) -> int:
     return current + 1 if "TokenVersion" in user else current
 
 
-=======
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 def create_access_token(
     *, email: str, role: str, employee_id: str, employee_name: str, token_version: int = 0
 ) -> str:
@@ -136,19 +133,12 @@ def get_current_user(
             detail="Your password was changed — please log in again",
         )
 
-<<<<<<< HEAD
     # Role and employee link come from the sheet, not the token: if an admin is demoted (or an
     # account re-linked), it takes effect on the very next request instead of up to 30 days later.
     return {
         "email": payload["sub"],
         "role": str(user.get("Role", "")).strip() or payload["role"],
         "employee_id": str(user.get("EmployeeID", "")).strip() or payload.get("employee_id") or "",
-=======
-    return {
-        "email": payload["sub"],
-        "role": payload["role"],
-        "employee_id": payload.get("employee_id") or "",
->>>>>>> f39b002157dba8453156debd9704189418f3fdd6
         "employee_name": payload.get("employee_name") or "",
     }
 
