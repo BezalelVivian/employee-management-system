@@ -1,7 +1,10 @@
 const TONE_MAP = {
   // attendance (Attendance History also returns these three, from /api/employee/attendance)
   Present: 'green', Late: 'amber', Absent: 'red',
+<<<<<<< HEAD
   'Half Day': 'amber', 'Short Hours': 'amber', 'Missing Check-out': 'amber', 'Not checked in': 'muted',
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
   'On Leave': 'green', Holiday: 'muted', 'Weekly Off': 'muted',
   // tasks
   Completed: 'green', 'In Progress': 'amber', Pending: 'muted',

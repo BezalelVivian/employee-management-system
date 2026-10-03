@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { api } from '../../api/client'
 import { useAuth } from '../../context/AuthContext'
 import StatusPill from '../../components/StatusPill'
+<<<<<<< HEAD
 import Icon from '../../components/Icon'
 import { fmtTime, fmtDateTime, fmtDate } from '../../utils/time'
 
@@ -28,6 +29,8 @@ function HoursCard({ today, finished }) {
     </div>
   )
 }
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 function greeting(hour) {
   if (hour < 12) return 'Good morning'
@@ -42,8 +45,11 @@ export default function Dashboard() {
   const [data, setData] = useState(null)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+<<<<<<< HEAD
   const [holidays, setHolidays] = useState([])
   const [party, setParty] = useState(0)
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
   useEffect(() => {
     const t = setInterval(() => setNow(new Date()), 1000)
@@ -61,14 +67,20 @@ export default function Dashboard() {
   }, [])
 
   useEffect(() => { load() }, [load])
+<<<<<<< HEAD
   useEffect(() => { api.get('/api/employee/holidays').then((h) => setHolidays(Array.isArray(h) ? h.slice(0, 3) : [])).catch(() => setHolidays([])) }, [])
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
   async function handleCheckIn() {
     setBusy(true)
     setError('')
     try {
       await api.post('/api/employee/attendance/checkin')
+<<<<<<< HEAD
       setParty((n) => n + 1)
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
       await load()
     } catch (err) { setError(err.message) } finally { setBusy(false) }
   }
@@ -88,6 +100,7 @@ export default function Dashboard() {
 
   return (
     <div>
+<<<<<<< HEAD
       {party > 0 && <Confetti key={party} />}
       <div className="page-header hero">
         <div>
@@ -101,12 +114,21 @@ export default function Dashboard() {
       </div>
 
       {error && <div className="banner banner-error" role="alert">{error}</div>}
+=======
+      <div className="page-header">
+        <h1>{greeting(now.getHours())}, {user?.name?.split(' ')[0] || 'there'} 👋</h1>
+        <div className="clock">{now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })} · {now.toLocaleTimeString()}</div>
+      </div>
+
+      {error && <div className="banner banner-error">{error}</div>}
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
       <div className="panel">
         <div className="panel-title">
           <h2>Today</h2>
           {today && <StatusPill status={today.status} />}
         </div>
+<<<<<<< HEAD
         <div className="today-grid">
           <HoursCard today={today} finished={hasCheckedOut} />
           <div className="grid-2">
@@ -164,8 +186,53 @@ export default function Dashboard() {
             <Icon name="activity" size={28} />
             <div>Nothing to show yet — check in or submit a task to get started.</div>
           </div>
+=======
+        <div className="grid-3" style={{ marginBottom: 16 }}>
+          <div className="stat">
+            <div className="value">{today?.checkIn ? today.checkIn.slice(11, 16) : '—'}</div>
+            <div className="label">Check-in</div>
+          </div>
+          <div className="stat">
+            <div className="value">{today?.checkOut ? today.checkOut.slice(11, 16) : '—'}</div>
+            <div className="label">Check-out</div>
+          </div>
+          <div className="stat">
+            <div className="value">{today?.workingHours || '—'}</div>
+            <div className="label">Working hours so far</div>
+          </div>
+        </div>
+        <div className="toolbar">
+          <button className="btn btn-primary" onClick={handleCheckIn} disabled={busy || hasCheckedIn}>Check In</button>
+          <button className="btn btn-secondary" onClick={handleCheckOut} disabled={busy || !hasCheckedIn || hasCheckedOut}>Check Out</button>
+          <button className="btn btn-secondary" onClick={() => navigate('/leave?new=1')}>Apply Leave</button>
+          <button className="btn btn-secondary" onClick={() => navigate('/tasks?new=1')}>Submit Task</button>
+        </div>
+      </div>
+
+      <div className="panel">
+        <div className="panel-title"><h2>Recent activity</h2></div>
+        {data?.recentActivity?.length ? (
+          <table>
+            <tbody>
+              {data.recentActivity.map((a, i) => (
+                <tr key={i}>
+                  <td style={{ width: '70%' }}>{a.label}</td>
+                  <td style={{ color: 'var(--muted)', fontSize: 13 }}>
+                    {a.timestamp ? new Date(a.timestamp).toLocaleString() : ''}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <div className="empty-state">Nothing to show yet — check in or submit a task to get started.</div>
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
         )}
       </div>
     </div>
   )
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6

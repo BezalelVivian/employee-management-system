@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+<<<<<<< HEAD
 import DateInput from '../../components/DateInput'
 import { todayLocalISO } from '../../utils/time'
 import { api } from '../../api/client'
@@ -38,6 +39,19 @@ export default function Employees() {
   const [newDept, setNewDept] = useState({ name: '', description: '' })
   const [deptFormError, setDeptFormError] = useState('')
   const [deptBusy, setDeptBusy] = useState(false)
+=======
+import { api } from '../../api/client'
+import StatusPill from '../../components/StatusPill'
+import Modal from '../../components/Modal'
+
+const emptyCreateForm = {
+  name: '', email: '', phone: '', dob: '', designation: '', departmentId: '',
+  roleTitle: '', address: '', joinedDate: new Date().toISOString().slice(0, 10), tempPassword: '',
+}
+
+export default function Employees() {
+  const [employees, setEmployees] = useState([])
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
   const [error, setError] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [createForm, setCreateForm] = useState(emptyCreateForm)
@@ -51,8 +65,11 @@ export default function Employees() {
   const [resetError, setResetError] = useState('')
   const [resetMessage, setResetMessage] = useState('')
   const [resetSaving, setResetSaving] = useState(false)
+<<<<<<< HEAD
   const [photos, setPhotos] = useState({})
   const [photoFor, setPhotoFor] = useState(null)
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
   const load = useCallback(async () => {
     try {
@@ -63,6 +80,7 @@ export default function Employees() {
   }, [])
 
   useEffect(() => { load() }, [load])
+<<<<<<< HEAD
   // One request for every photo; purely cosmetic, so a failure just shows initials.
   useEffect(() => {
     api.get('/api/admin/photos').then((p) => setPhotos(p || {})).catch(() => setPhotos({}))
@@ -110,12 +128,15 @@ export default function Employees() {
       setDeptBusy(false)
     }
   }
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
   function isActive(e) {
     return String(e.IsActive).toUpperCase() === 'TRUE' || e.IsActive === true
   }
 
   async function handleToggle(emp) {
+<<<<<<< HEAD
     const deactivating = isActive(emp)
     const ok = await confirm({
       title: deactivating ? `Deactivate ${emp.Name}?` : `Activate ${emp.Name}?`,
@@ -127,6 +148,10 @@ export default function Employees() {
     try {
       await api.patch(`/api/admin/employees/${emp.ID}/toggle-active`)
       toast(deactivating ? `${emp.Name} deactivated` : `${emp.Name} activated`)
+=======
+    try {
+      await api.patch(`/api/admin/employees/${emp.ID}/toggle-active`)
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
       await load()
     } catch (err) { setError(err.message) }
   }
@@ -195,6 +220,7 @@ export default function Employees() {
       setResetError('Temporary password must be at least 6 characters.')
       return
     }
+<<<<<<< HEAD
     const ok = await confirm({
       title: `Reset password for ${resetting.Name}?`,
       message: 'Their current password will stop working immediately.',
@@ -202,6 +228,8 @@ export default function Employees() {
       danger: true,
     })
     if (!ok) return
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     setResetSaving(true)
     setResetError('')
     setResetMessage('')
@@ -223,7 +251,10 @@ export default function Employees() {
       <div className="panel">
         <div className="toolbar">
           <div style={{ flex: 1 }} />
+<<<<<<< HEAD
           <button className="btn btn-secondary" onClick={openDeptManager}>Departments</button>
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
           <button className="btn btn-primary" onClick={() => { setCreateForm(emptyCreateForm); setCreateError(''); setShowCreate(true) }}>Add Employee</button>
         </div>
         <div className="table-wrap">
@@ -234,6 +265,7 @@ export default function Employees() {
                 {employees.map((e) => (
                   <tr key={e.ID}>
                     <td>{e.EmployeeCode}</td>
+<<<<<<< HEAD
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                         <Avatar name={e.Name} src={photos[e.ID]} size="sm" />
@@ -249,6 +281,17 @@ export default function Employees() {
                     <td className="row-actions">
                       <button className="btn btn-secondary btn-sm" onClick={() => openEdit(e)}>Edit</button>
                       <button className="btn btn-secondary btn-sm" onClick={() => setPhotoFor(e)}>Photo</button>
+=======
+                    <td>{e.Name}</td>
+                    <td>{e.Email}</td>
+                    <td>{e.Designation}</td>
+                    <td>{e.DepartmentID}</td>
+                    <td><StatusPill status={isActive(e) ? 'Present' : 'Absent'} />
+                      <span style={{ marginLeft: 6, fontSize: 12.5, color: 'var(--muted)' }}>{isActive(e) ? 'Active' : 'Inactive'}</span>
+                    </td>
+                    <td style={{ display: 'flex', gap: 6 }}>
+                      <button className="btn btn-secondary btn-sm" onClick={() => openEdit(e)}>Edit</button>
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
                       <button className="btn btn-secondary btn-sm" onClick={() => openReset(e)}>Reset Password</button>
                       <button className={`btn btn-sm ${isActive(e) ? 'btn-danger' : 'btn-secondary'}`} onClick={() => handleToggle(e)}>
                         {isActive(e) ? 'Deactivate' : 'Activate'}
@@ -264,6 +307,7 @@ export default function Employees() {
         </div>
       </div>
 
+<<<<<<< HEAD
       {showDepts && (
         <Modal title="Departments" onClose={() => setShowDepts(false)}>
           {deptFormError && <div className="banner banner-error">{deptFormError}</div>}
@@ -289,6 +333,8 @@ export default function Employees() {
         </Modal>
       )}
 
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
       {showCreate && (
         <Modal title="Add employee" onClose={() => setShowCreate(false)}>
           {createError && <div className="banner banner-error">{createError}</div>}
@@ -299,6 +345,7 @@ export default function Employees() {
             </div>
             <div className="field-row">
               <div className="field"><label>Phone</label><input value={createForm.phone} maxLength={10} inputMode="numeric" placeholder="10-digit mobile number" onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value.replace(/\D/g, '') })} /></div>
+<<<<<<< HEAD
               <div className="field"><label>DOB</label><DateInput value={createForm.dob} onChange={(e) => setCreateForm({ ...createForm, dob: e.target.value })} /></div>
             </div>
             <div className="field-row">
@@ -308,6 +355,17 @@ export default function Employees() {
             <div className="field-row">
               <div className="field"><label>Role title</label><input value={createForm.roleTitle} onChange={(e) => setCreateForm({ ...createForm, roleTitle: e.target.value })} /></div>
               <div className="field"><label>Joined date</label><DateInput required value={createForm.joinedDate} onChange={(e) => setCreateForm({ ...createForm, joinedDate: e.target.value })} /></div>
+=======
+              <div className="field"><label>DOB</label><input type="date" value={createForm.dob} onChange={(e) => setCreateForm({ ...createForm, dob: e.target.value })} /></div>
+            </div>
+            <div className="field-row">
+              <div className="field"><label>Designation</label><input value={createForm.designation} onChange={(e) => setCreateForm({ ...createForm, designation: e.target.value })} /></div>
+              <div className="field"><label>Department ID</label><input value={createForm.departmentId} onChange={(e) => setCreateForm({ ...createForm, departmentId: e.target.value })} /></div>
+            </div>
+            <div className="field-row">
+              <div className="field"><label>Role title</label><input value={createForm.roleTitle} onChange={(e) => setCreateForm({ ...createForm, roleTitle: e.target.value })} /></div>
+              <div className="field"><label>Joined date</label><input type="date" required value={createForm.joinedDate} onChange={(e) => setCreateForm({ ...createForm, joinedDate: e.target.value })} /></div>
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
             </div>
             <div className="field"><label>Address</label><textarea value={createForm.address} onChange={(e) => setCreateForm({ ...createForm, address: e.target.value })} /></div>
             <div className="field">
@@ -333,15 +391,23 @@ export default function Employees() {
               <div className="field"><label>Designation</label><input value={editForm.designation} onChange={(e) => setEditForm({ ...editForm, designation: e.target.value })} /></div>
             </div>
             <div className="field-row">
+<<<<<<< HEAD
               <div className="field"><label>Department</label><DepartmentSelect departments={departments} value={editForm.departmentId} onChange={(v) => setEditForm({ ...editForm, departmentId: v })} /></div>
               <div className="field"><label>Role title</label><input value={editForm.roleTitle} onChange={(e) => setEditForm({ ...editForm, roleTitle: e.target.value })} /></div>
             </div>
             <div className="field"><label>Joined date</label><DateInput value={editForm.joinedDate} onChange={(e) => setEditForm({ ...editForm, joinedDate: e.target.value })} /></div>
+=======
+              <div className="field"><label>Department ID</label><input value={editForm.departmentId} onChange={(e) => setEditForm({ ...editForm, departmentId: e.target.value })} /></div>
+              <div className="field"><label>Role title</label><input value={editForm.roleTitle} onChange={(e) => setEditForm({ ...editForm, roleTitle: e.target.value })} /></div>
+            </div>
+            <div className="field"><label>Joined date</label><input type="date" value={editForm.joinedDate} onChange={(e) => setEditForm({ ...editForm, joinedDate: e.target.value })} /></div>
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
             <button className="btn btn-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
           </form>
         </Modal>
       )}
 
+<<<<<<< HEAD
       {photoFor && (
         <Modal title={`Photo — ${photoFor.Name}`} onClose={() => setPhotoFor(null)}>
           <PhotoPicker
@@ -359,6 +425,8 @@ export default function Employees() {
         </Modal>
       )}
 
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
       {resetting && (
         <Modal title={`Reset password — ${resetting.Name}`} onClose={() => setResetting(null)}>
           {resetError && <div className="banner banner-error">{resetError}</div>}

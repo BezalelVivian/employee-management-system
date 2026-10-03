@@ -27,6 +27,7 @@ Thumbs.db
 *.sqlite3
 
 # Logs
+<<<<<<< HEAD
 *.log
 # Secrets / credentials
 service-account-key.json
@@ -38,3 +39,6 @@ service-account-key.json
 node_modules/
 dist/
 build/
+=======
+*.log
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6

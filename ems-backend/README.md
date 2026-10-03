@@ -4,6 +4,7 @@
 1. Reuse your existing Google Sheet (or a copy). Confirm these tabs and headers exist **exactly** as spelled (case-sensitive) — order of columns doesn't matter, spelling does:
    - `Users`: ID, Email, PasswordHash, Role, EmployeeID, IsActive, CreatedAt
    - `Employees`: ID, EmployeeCode, Name, Email, Phone, DOB, Designation, DepartmentID, RoleTitle, Address, JoinedDate, IsActive
+<<<<<<< HEAD
    - `Departments`: ID, Name, Description, IsActive (feeds the Department dropdown in Add/Edit Employee)
    - `Attendance`: ID, EmployeeID, AttendanceDate, CheckIn, CheckOut, Status
    - `Tasks`: ID, EmployeeID, ClientName, ProjectName, Description, Status, Priority, Remarks, TaskDate, AdminStatus, AdminRemarks, CreatedAt, UpdatedAt
@@ -12,6 +13,12 @@
      - `Holidays`: ID, Date, Name -- without it, holidays show as Absent
      - `Notifications`: ID, EmployeeID, Type, Message, RelatedID, IsRead, CreatedAt -- leave/task decisions notify the employee (bell icon in the app)
      - `Photos`: EmployeeID, Photo, UpdatedAt -- employee profile photos (employees upload their own on My Profile; admins can set/remove any from Employees -> Photo)
+=======
+   - `Departments`: whatever columns you already use
+   - `Attendance`: ID, EmployeeID, AttendanceDate, CheckIn, CheckOut, Status
+   - `Tasks`: ID, EmployeeID, ClientName, ProjectName, Description, Status, Priority, Remarks, TaskDate, AdminStatus, AdminRemarks, CreatedAt, UpdatedAt
+   - `LeaveRequests`: ID, EmployeeID, LeaveType, FromDate, ToDate, Reason, Status, AdminRemarks, ReviewedBy, CreatedAt, UpdatedAt
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 2. Every sheet needs at least the header row already typed in — an empty sheet raises a clear error rather than failing silently.
 3. Delete/ignore any leftover `EditRequests` tab — it's not used in this version.
 
@@ -48,7 +55,11 @@ print(hash_password("your-temp-admin-password"))
 Copy the printed hash into a new row in the `Users` sheet: `Role=admin`, `EmployeeID` left blank, `IsActive=TRUE`, `PasswordHash=<the hash>`.
 
 ## 5. Deploying to Render
+<<<<<<< HEAD
 1. New Web Service → connect this repo → Build command `pip install -r requirements.txt` → Start command `uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'` (the last two flags make the login rate limit count each person's own IP instead of Render's proxy IP, which every employee would otherwise share).
+=======
+1. New Web Service → connect this repo → Build command `pip install -r requirements.txt` → Start command `uvicorn main:app --host 0.0.0.0 --port $PORT`.
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 2. Set environment variables on Render: `GOOGLE_SERVICE_ACCOUNT_JSON`, `SPREADSHEET_ID`, `JWT_SECRET`, `CORS_ORIGINS` (your Vercel domain, e.g. `https://your-app.vercel.app`).
 3. Render's free tier spins down after ~15 min idle — the first request after that takes 30-60s to wake up. Fine for an internal tool.
 
@@ -56,6 +67,7 @@ Copy the printed hash into a new row in the `Users` sheet: `Role=admin`, `Employ
 - No real transactions — two admins reviewing the same item at the same instant is a rare, accepted race condition.
 - IDs are simple incrementing integers, computed as `max existing + 1` — not safe under true concurrent writes, acceptable at ~50-employee scale.
 - No self-service password reset. Reset a password manually the same way the first admin user was seeded (`hash_password(...)` → paste into the `PasswordHash` cell).
+<<<<<<< HEAD
 - **Attendance is flexible-hours by default.** One check-in and one check-out per day; the app records the times and computes working hours. No "Late" marking unless you set `ENABLE_LATE_MARKING=true` (then `LATE_CUTOFF_HOUR`/`LATE_CUTOFF_MINUTE` apply, default 10:00). Status is computed when a page loads, not trusted from the sheet's `Status` column. Optional rules, off by default: `HALF_DAY_HOURS` and `FULL_DAY_HOURS` (e.g. `4` and `7`).
 - `APP_TIMEZONE` (default `Asia/Kolkata`) decides "today" and all check-in/out times. Render servers run in UTC, so don't remove it.
 - `WEEKLY_OFF_DAYS` (default `6` = Sunday; Monday=0). Use `5,6` for Saturday + Sunday.
@@ -65,4 +77,7 @@ Copy the printed hash into a new row in the `Users` sheet: `Role=admin`, `Employ
 - Tests: `pip install pytest httpx && pytest tests` (uses an in-memory fake of the sheet, no Google access needed).
 - **Photos** are resized in the browser to a small square JPEG (~15-30 KB) and stored as text in the `Photos` tab, one row per employee (a Sheets cell holds max 50,000 characters; the server rejects anything over 42,000 or that isn't a real JPEG). They live in their own tab so the busy `Employees` tab stays light.
 - **Google quota (60 reads/min):** notifications are fetched on app load / navigation / returning to the tab, at most once a minute, with no polling. "Mark all read" is one batched write. Photos are cached in the browser.
+=======
+- `LATE_CUTOFF_HOUR`/`LATE_CUTOFF_MINUTE` env vars control the check-in cutoff for marking `Status=Late` (default 9:30).
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 - Login is rate-limited to 10 attempts/minute per IP via `slowapi` as basic brute-force protection.

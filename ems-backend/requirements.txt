@@ -11,4 +11,7 @@ pydantic[email]==2.9.2
 python-dotenv==1.0.1
 slowapi==0.1.9
 python-multipart==0.0.9
+<<<<<<< HEAD
 tzdata
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6

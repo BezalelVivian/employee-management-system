@@ -1,9 +1,13 @@
 import logging
+<<<<<<< HEAD
 import threading
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+<<<<<<< HEAD
 from auth import create_access_token, get_current_user, hash_password, next_token_version, verify_password
 from models import ProfileUpdate, TaskCreate, TaskUpdate, LeaveCreate, PasswordChange, PhotoUpload
 from sheets_client import (
@@ -13,15 +17,27 @@ from sheets_client import (
 import photos
 from attendance import build_days, entry_from_row, empty_entry
 from utils import now, today_date, today_str, to_iso, working_hours_str, is_working_day, parse_date_safe
+=======
+from auth import create_access_token, get_current_user, get_token_version, hash_password, verify_password
+from models import ProfileUpdate, TaskCreate, TaskUpdate, LeaveCreate, PasswordChange
+from sheets_client import (
+    all_rows, find_by_id, find_one, find_all, find_all_optional,
+    append_row, update_row, next_id, get_holiday_dates, SheetError,
+)
+from utils import now, today_str, to_iso, is_late, working_hours_str, is_working_day, parse_date_safe
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 # History views only backfill this many days before today by default (bounded so a
 # long-tenured employee's page load doesn't have to synthesize years of empty rows).
 DEFAULT_HISTORY_DAYS = 90
+<<<<<<< HEAD
 MAX_NOTIFICATIONS = 50  # newest first; keeps the response small however long someone has been here
 
 # Check-in / check-out are read-then-write. Serialize them (single Render instance) and read
 # fresh from the sheet, so a double click or two quick taps can never create a second row.
 _attendance_lock = threading.Lock()
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 logger = logging.getLogger("ems.employee")
 router = APIRouter(prefix="/api/employee", tags=["employee"])
@@ -51,6 +67,7 @@ def get_my_dashboard(current_user: dict = Depends(get_current_user)):
     except SheetError as e:
         _handle_sheet_error(e)
 
+<<<<<<< HEAD
     today_d = today_date()
     today = today_d.isoformat()
     today_att = next((r for r in attendance_rows if r.get("AttendanceDate") == today and r.get("CheckIn")), None)
@@ -66,6 +83,26 @@ def get_my_dashboard(current_user: dict = Depends(get_current_user)):
             fallback_status = "Not checked in"
         today_summary = {"checkIn": None, "checkOut": None, "workingHours": None,
                          "status": fallback_status, "inProgress": False}
+=======
+    today = today_str()
+    today_att = next((r for r in attendance_rows if r.get("AttendanceDate") == today), None)
+
+    if today_att:
+        today_summary = {
+            "checkIn": today_att.get("CheckIn") or None,
+            "checkOut": today_att.get("CheckOut") or None,
+            "workingHours": working_hours_str(today_att.get("CheckIn", ""), today_att.get("CheckOut", "")),
+            "status": today_att.get("Status") or "Absent",
+        }
+    else:
+        holidays = get_holiday_dates()
+        today_date = date.today()
+        if not is_working_day(today_date, holidays):
+            fallback_status = "Holiday" if today_date.isoformat() in holidays else "Weekly Off"
+        else:
+            fallback_status = "Absent"
+        today_summary = {"checkIn": None, "checkOut": None, "workingHours": None, "status": fallback_status}
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
     activity = []
     for r in attendance_rows:
@@ -107,8 +144,11 @@ def get_my_profile(current_user: dict = Depends(get_current_user)):
     if emp is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Employee record not found")
     emp.pop("_row_number", None)
+<<<<<<< HEAD
     dept_id = str(emp.get("DepartmentID", "")).strip()
     emp["DepartmentName"] = get_department_names().get(dept_id, dept_id)
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     return emp
 
 
@@ -135,6 +175,7 @@ def update_my_profile(body: ProfileUpdate, current_user: dict = Depends(get_curr
     return {"message": "Profile updated"}
 
 
+<<<<<<< HEAD
 # ---------- Profile photo ----------
 
 @router.get("/photo")
@@ -163,6 +204,8 @@ def delete_my_photo(current_user: dict = Depends(get_current_user)):
     return {"message": "Photo removed"}
 
 
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 # ---------- Password ----------
 
 @router.put("/password")
@@ -180,6 +223,7 @@ def change_my_password(body: PasswordChange, current_user: dict = Depends(get_cu
     if not verify_password(body.current_password, user.get("PasswordHash", "")):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Current password is incorrect")
 
+<<<<<<< HEAD
     new_version = next_token_version(user)
     try:
         # TokenVersion (optional column on Users) invalidates every older login token, e.g. a
@@ -196,10 +240,18 @@ def change_my_password(body: PasswordChange, current_user: dict = Depends(get_cu
         employee_name=current_user.get("employee_name", ""), token_version=new_version,
     )
     return {"message": "Password updated", "access_token": token}
+=======
+    try:
+        update_row("Users", user["ID"], {"PasswordHash": hash_password(body.new_password)})
+    except SheetError as e:
+        _handle_sheet_error(e)
+    return {"message": "Password updated"}
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 
 # ---------- Attendance ----------
 
+<<<<<<< HEAD
 def _todays_rows(emp_id: str, today: str) -> list[dict]:
     """Today's Attendance rows for this employee, read fresh from the sheet (not the cache)."""
     rows = find_all("Attendance", "EmployeeID", emp_id, fresh=True)
@@ -228,10 +280,44 @@ def check_in(current_user: dict = Depends(get_current_user)):
         except SheetError as e:
             _handle_sheet_error(e)
     return {"message": "Checked in", "checkIn": ts, "status": "Present"}
+=======
+@router.post("/attendance/checkin")
+def check_in(current_user: dict = Depends(get_current_user)):
+    emp_id = _my_employee_id(current_user)
+    today = today_str()
+    try:
+        existing = find_all("Attendance", "EmployeeID", emp_id)
+    except SheetError as e:
+        _handle_sheet_error(e)
+
+    todays_row = next((r for r in existing if r.get("AttendanceDate") == today), None)
+    if todays_row and todays_row.get("CheckIn"):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Already checked in today")
+
+    ts = now()
+    status_val = "Late" if is_late(ts) else "Present"
+    row = {
+        "ID": next_id("Attendance"),
+        "EmployeeID": emp_id,
+        "AttendanceDate": today,
+        "CheckIn": to_iso(ts),
+        "CheckOut": "",
+        "Status": status_val,
+    }
+    try:
+        if todays_row:
+            update_row("Attendance", todays_row["ID"], {"CheckIn": to_iso(ts), "Status": status_val})
+        else:
+            append_row("Attendance", row)
+    except SheetError as e:
+        _handle_sheet_error(e)
+    return {"message": "Checked in", "checkIn": row["CheckIn"], "status": status_val}
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 
 @router.post("/attendance/checkout")
 def check_out(current_user: dict = Depends(get_current_user)):
+<<<<<<< HEAD
     """Check-out only works after today's check-in, and only once."""
     emp_id = _my_employee_id(current_user)
     today = today_str()
@@ -250,6 +336,31 @@ def check_out(current_user: dict = Depends(get_current_user)):
         except SheetError as e:
             _handle_sheet_error(e)
     return {"message": "Checked out", "checkOut": ts, "workingHours": working_hours_str(row["CheckIn"], ts)}
+=======
+    emp_id = _my_employee_id(current_user)
+    today = today_str()
+    try:
+        existing = find_all("Attendance", "EmployeeID", emp_id)
+    except SheetError as e:
+        _handle_sheet_error(e)
+
+    todays_row = next((r for r in existing if r.get("AttendanceDate") == today), None)
+    if not todays_row or not todays_row.get("CheckIn"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You must check in before checking out")
+    if todays_row.get("CheckOut"):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Already checked out today")
+
+    ts = to_iso(now())
+    try:
+        update_row("Attendance", todays_row["ID"], {"CheckOut": ts})
+    except SheetError as e:
+        _handle_sheet_error(e)
+    return {
+        "message": "Checked out",
+        "checkOut": ts,
+        "workingHours": working_hours_str(todays_row.get("CheckIn", ""), ts),
+    }
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 
 @router.get("/attendance")
@@ -259,12 +370,23 @@ def get_my_attendance(
     status_filter: str | None = Query(None, alias="status"),
     current_user: dict = Depends(get_current_user),
 ):
+<<<<<<< HEAD
     """Day-by-day attendance history (see attendance.build_days for how gaps are filled in)."""
+=======
+    """
+    Day-by-day attendance history. Unlike the raw Attendance sheet (which only has a row
+    for days someone actually checked in), this fills in every day in range with its real
+    status: Present/Late (from a row), On Leave (approved leave covers that day), Holiday /
+    Weekly Off (from the Holidays sheet + Sunday), or Absent (a working day with no check-in
+    and nothing else explaining it).
+    """
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     emp_id = _my_employee_id(current_user)
     try:
         att_rows = find_all("Attendance", "EmployeeID", emp_id)
         leave_rows = find_all("LeaveRequests", "EmployeeID", emp_id)
         emp = find_by_id("Employees", emp_id)
+<<<<<<< HEAD
         holidays = get_holiday_dates()
     except SheetError as e:
         _handle_sheet_error(e)
@@ -274,14 +396,74 @@ def get_my_attendance(
 
     range_to = min(date_to or today, today)  # never synthesize future days
     range_from = date_from or (today - timedelta(days=DEFAULT_HISTORY_DAYS))
+=======
+    except SheetError as e:
+        _handle_sheet_error(e)
+
+    holidays = get_holiday_dates()
+    today = date.today()
+    joined = parse_date_safe(emp.get("JoinedDate")) if emp else None
+
+    range_to = date_to or today
+    if range_to > today:
+        range_to = today  # never synthesize future days
+
+    default_from = today - timedelta(days=DEFAULT_HISTORY_DAYS)
+    range_from = date_from or default_from
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     if joined and joined > range_from:
         range_from = joined  # don't mark someone absent before they joined
     if range_from > range_to:
         range_from = range_to
 
+<<<<<<< HEAD
     result = build_days(att_rows, leave_rows, holidays, range_from, range_to, today=today)
     if status_filter:
         result = [r for r in result if r["status"] == status_filter]
+=======
+    by_date = {r.get("AttendanceDate"): r for r in att_rows if r.get("AttendanceDate")}
+
+    approved_leave_days = set()
+    for lr in leave_rows:
+        if lr.get("Status") != "Approved":
+            continue
+        f, t = parse_date_safe(lr.get("FromDate")), parse_date_safe(lr.get("ToDate"))
+        if not f or not t:
+            continue
+        d = f
+        while d <= t:
+            approved_leave_days.add(d.isoformat())
+            d += timedelta(days=1)
+
+    result = []
+    d = range_from
+    while d <= range_to:
+        ds = d.isoformat()
+        row = by_date.get(ds)
+        if row:
+            entry = {
+                "date": ds,
+                "checkIn": row.get("CheckIn") or None,
+                "checkOut": row.get("CheckOut") or None,
+                "workingHours": working_hours_str(row.get("CheckIn", ""), row.get("CheckOut", "")),
+                "status": row.get("Status") or "Absent",
+            }
+        elif ds in approved_leave_days:
+            entry = {"date": ds, "checkIn": None, "checkOut": None, "workingHours": None, "status": "On Leave"}
+        elif not is_working_day(d, holidays):
+            entry = {
+                "date": ds, "checkIn": None, "checkOut": None, "workingHours": None,
+                "status": "Holiday" if ds in holidays else "Weekly Off",
+            }
+        else:
+            entry = {"date": ds, "checkIn": None, "checkOut": None, "workingHours": None, "status": "Absent"}
+        result.append(entry)
+        d += timedelta(days=1)
+
+    if status_filter:
+        result = [r for r in result if r["status"] == status_filter]
+
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     result.sort(key=lambda r: r["date"], reverse=True)
     return result
 
@@ -497,6 +679,7 @@ def get_my_leaves(
 # Message, RelatedID, IsRead, CreatedAt) — if that sheet doesn't exist yet, this simply
 # returns an empty list rather than erroring, so the feature degrades gracefully.
 
+<<<<<<< HEAD
 HOLIDAY_NOTICE_DAYS = 14  # holidays this many days ahead appear in the bell
 
 
@@ -541,6 +724,8 @@ def get_holidays(current_user: dict = Depends(get_current_user)):
     return res
 
 
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 @router.get("/notifications")
 def get_my_notifications(current_user: dict = Depends(get_current_user)):
     emp_id = _my_employee_id(current_user)
@@ -557,10 +742,14 @@ def get_my_notifications(current_user: dict = Depends(get_current_user)):
         for r in rows
     ]
     result.sort(key=lambda n: n["createdAt"] or "", reverse=True)
+<<<<<<< HEAD
     result = result[:MAX_NOTIFICATIONS]
     # Upcoming holidays are computed on the fly (no extra sheet writes). The browser keeps
     # track of which ones were read, so they simply drop off the list once the day has passed.
     return _upcoming_holiday_notes() + result
+=======
+    return result
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 
 @router.patch("/notifications/{notification_id}/read")
@@ -583,6 +772,7 @@ def mark_notification_read(notification_id: str, current_user: dict = Depends(ge
 def mark_all_notifications_read(current_user: dict = Depends(get_current_user)):
     emp_id = _my_employee_id(current_user)
     rows = find_all_optional("Notifications", "EmployeeID", emp_id)
+<<<<<<< HEAD
     unread_ids = [
         r["ID"] for r in rows
         if str(r.get("IsRead", "")).strip().upper() not in ("TRUE", "1", "YES")
@@ -594,3 +784,12 @@ def mark_all_notifications_read(current_user: dict = Depends(get_current_user)):
         except SheetError as e:
             _handle_sheet_error(e)
     return {"message": "All notifications marked as read"}
+=======
+    for r in rows:
+        if str(r.get("IsRead", "")).strip().upper() not in ("TRUE", "1", "YES"):
+            try:
+                update_row("Notifications", r["ID"], {"IsRead": "TRUE"})
+            except SheetError as e:
+                _handle_sheet_error(e)
+    return {"message": "All notifications marked as read"}
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6

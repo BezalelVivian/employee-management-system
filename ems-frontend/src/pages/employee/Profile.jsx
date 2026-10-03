@@ -1,16 +1,24 @@
 import { useEffect, useState } from 'react'
+<<<<<<< HEAD
 import DateInput from '../../components/DateInput'
 import { fmtDate } from '../../utils/time'
 import { api, setToken } from '../../api/client'
 import { useAuth } from '../../context/AuthContext'
 import PhotoPicker from '../../components/PhotoPicker'
+=======
+import { api } from '../../api/client'
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 const READONLY_FIELDS = [
   ['EmployeeCode', 'Employee ID'],
   ['Name', 'Name'],
   ['Email', 'Email'],
   ['Designation', 'Designation'],
+<<<<<<< HEAD
   ['DepartmentName', 'Department'],
+=======
+  ['DepartmentID', 'Department'],
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
   ['RoleTitle', 'Role'],
   ['JoinedDate', 'Joined'],
 ]
@@ -18,7 +26,10 @@ const READONLY_FIELDS = [
 const emptyPasswordForm = { current_password: '', new_password: '', confirm_password: '' }
 
 export default function Profile() {
+<<<<<<< HEAD
   const { photo, setPhoto } = useAuth()
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
   const [profile, setProfile] = useState(null)
   const [form, setForm] = useState({ phone: '', address: '', dob: '' })
   const [error, setError] = useState('')
@@ -72,12 +83,19 @@ export default function Profile() {
     }
     setPwSaving(true)
     try {
+<<<<<<< HEAD
       const res = await api.put('/api/employee/password', {
         current_password: pwForm.current_password,
         new_password: pwForm.new_password,
       })
       // Only present if the backend session-invalidation feature is installed.
       if (res?.access_token) setToken(res.access_token)
+=======
+      await api.put('/api/employee/password', {
+        current_password: pwForm.current_password,
+        new_password: pwForm.new_password,
+      })
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
       setPwMessage('Password updated.')
       setPwForm(emptyPasswordForm)
     } catch (err) {
@@ -87,6 +105,7 @@ export default function Profile() {
     }
   }
 
+<<<<<<< HEAD
   if (!profile && !error) {
     return (
       <div role="status" aria-live="polite">
@@ -103,6 +122,9 @@ export default function Profile() {
       </div>
     )
   }
+=======
+  if (!profile && !error) return <p>Loading…</p>
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
   return (
     <div>
@@ -112,6 +134,7 @@ export default function Profile() {
 
       {profile && (
         <div className="panel">
+<<<<<<< HEAD
           <div className="panel-title"><h2>Profile photo</h2></div>
           <PhotoPicker
             name={profile.Name}
@@ -124,13 +147,19 @@ export default function Profile() {
 
       {profile && (
         <div className="panel">
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
           <div className="panel-title"><h2>Official record</h2></div>
           <p className="hint-text" style={{ marginTop: -8, marginBottom: 14 }}>These fields are admin-managed — contact your admin to change them.</p>
           <div className="grid-2">
             {READONLY_FIELDS.map(([key, label]) => (
               <div className="field" key={key}>
                 <label>{label}</label>
+<<<<<<< HEAD
                 <input value={key === 'JoinedDate' ? (profile[key] ? fmtDate(profile[key]) : '') : (profile[key] || '')} disabled />
+=======
+                <input value={profile[key] || ''} disabled />
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
               </div>
             ))}
           </div>
@@ -147,7 +176,11 @@ export default function Profile() {
             </div>
             <div className="field">
               <label htmlFor="dob">Date of birth</label>
+<<<<<<< HEAD
               <DateInput id="dob" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} />
+=======
+              <input id="dob" type="date" value={form.dob} onChange={(e) => setForm({ ...form, dob: e.target.value })} />
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
             </div>
           </div>
           <div className="field">

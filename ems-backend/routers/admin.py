@@ -1,4 +1,5 @@
 import logging
+<<<<<<< HEAD
 from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -18,6 +19,19 @@ from sheets_client import (
 from utils import today_str, today_date, to_iso, now, is_working_day, parse_date_safe
 
 MAX_ADMIN_ATTENDANCE_DAYS = 31
+=======
+from datetime import date
+
+from fastapi import APIRouter, Depends, HTTPException, status
+
+from auth import require_admin, hash_password
+from models import EmployeeCreate, EmployeeAdminUpdate, TaskReview, LeaveReview, AdminPasswordReset
+from sheets_client import (
+    all_rows, find_by_id, find_one, find_all,
+    append_row, append_row_optional, update_row, next_id, next_id_optional, get_holiday_dates, SheetError,
+)
+from utils import today_str, to_iso, now, is_working_day
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 logger = logging.getLogger("ems.admin")
 router = APIRouter(prefix="/api/admin", tags=["admin"], dependencies=[Depends(require_admin)])
@@ -55,6 +69,7 @@ def _notify(employee_id: str, ntype: str, message: str, related_id: str = "") ->
         logger.exception("Failed to write notification for employee %s (non-fatal)", employee_id)
 
 
+<<<<<<< HEAD
 def _dmy(iso) -> str:
     d = parse_date_safe(iso)
     return d.strftime("%d-%m-%Y") if d else str(iso or "")
@@ -101,6 +116,8 @@ def remove_holiday(holiday_id: str):
     return {"message": "Holiday removed"}
 
 
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 # ---------- Dashboard ----------
 
 @router.get("/dashboard")
@@ -113,6 +130,7 @@ def get_admin_dashboard():
     except SheetError as e:
         _handle_sheet_error(e)
 
+<<<<<<< HEAD
     def _is_true(v) -> bool:
         return str(v or "").strip().upper() in ("TRUE", "1", "YES")
 
@@ -145,6 +163,28 @@ def get_admin_dashboard():
     holidays = get_holiday_dates()
     if is_working_day(today_d, holidays):
         estimated_absent = len(active_ids - present_ids - leave_ids)
+=======
+    total_employees = len(employees)
+    active_employees = sum(1 for e in employees if str(e.get("IsActive", "")).strip().upper() in ("TRUE", "1", "YES"))
+
+    today = today_str()
+    present_today = sum(
+        1 for a in attendance
+        if a.get("AttendanceDate") == today and a.get("Status") in ("Present", "Late")
+    )
+    on_leave_today = sum(
+        1 for l in leaves
+        if l.get("Status") == "Approved" and l.get("FromDate", "") <= today <= l.get("ToDate", "")
+    )
+    pending_leaves = sum(1 for l in leaves if l.get("Status") == "Pending")
+    pending_tasks = sum(1 for t in tasks if t.get("AdminStatus") == "Pending")
+
+    # On a Sunday or a listed holiday, nobody is expected in, so don't report a misleading
+    # "absent" count just because check-in rows are naturally empty that day.
+    holidays = get_holiday_dates()
+    if is_working_day(date.today(), holidays):
+        estimated_absent = max(0, active_employees - present_today - on_leave_today)
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     else:
         estimated_absent = 0
 
@@ -159,6 +199,7 @@ def get_admin_dashboard():
     }
 
 
+<<<<<<< HEAD
 # ---------- Departments ----------
 
 class DepartmentCreate(BaseModel):
@@ -218,6 +259,16 @@ def toggle_department(dept_id: str):
     except SheetError as e:
         _handle_sheet_error(e)
     return {"message": "Department updated", "IsActive": not now_off}
+=======
+# ---------- Departments (read-only) ----------
+
+@router.get("/departments")
+def list_departments():
+    try:
+        return all_rows("Departments")
+    except SheetError as e:
+        _handle_sheet_error(e)
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 
 
 # ---------- Employees ----------
@@ -228,11 +279,16 @@ def list_employees():
         rows = all_rows("Employees")
     except SheetError as e:
         _handle_sheet_error(e)
+<<<<<<< HEAD
     names = get_department_names()
     for r in rows:
         r.pop("_row_number", None)
         dept_id = str(r.get("DepartmentID", "")).strip()
         r["DepartmentName"] = names.get(dept_id, dept_id)
+=======
+    for r in rows:
+        r.pop("_row_number", None)
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     return rows
 
 
@@ -276,6 +332,7 @@ def create_employee(body: EmployeeCreate):
     return {"message": "Employee created", "employeeId": emp_id, "employeeCode": emp_row["EmployeeCode"]}
 
 
+<<<<<<< HEAD
 # ---------- Employee photos ----------
 
 @router.get("/photos")
@@ -313,6 +370,8 @@ def delete_employee_photo(employee_id: str):
     return {"message": "Photo removed"}
 
 
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 @router.patch("/employees/{employee_id}/toggle-active")
 def toggle_employee_active(employee_id: str):
     try:
@@ -370,6 +429,7 @@ def admin_update_employee(employee_id: str, body: EmployeeAdminUpdate):
     return {"message": "Employee updated"}
 
 
+<<<<<<< HEAD
 # ---------- Attendance ----------
 
 @router.get("/attendance")
@@ -467,6 +527,8 @@ def edit_attendance(body: AttendanceEdit, current_user: dict = Depends(require_a
     return {"message": "Attendance updated"}
 
 
+=======
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
 # ---------- Task review ----------
 
 @router.get("/tasks")
@@ -546,7 +608,11 @@ def review_leave(leave_id: str, body: LeaveReview, current_user: dict = Depends(
     _notify(
         leave.get("EmployeeID", ""),
         "leave",
+<<<<<<< HEAD
         f"Your {leave.get('LeaveType', 'leave')} request ({_dmy(leave.get('FromDate', ''))} to {_dmy(leave.get('ToDate', ''))}) was {body.status.lower()}.",
+=======
+        f"Your {leave.get('LeaveType', 'leave')} request ({leave.get('FromDate', '')} to {leave.get('ToDate', '')}) was {body.status.lower()}.",
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
         leave_id,
     )
     return {"message": "Leave request reviewed"}
@@ -568,6 +634,7 @@ def reset_employee_password(employee_id: str, body: AdminPasswordReset):
 
     try:
         user = find_one("Users", "EmployeeID", employee_id)
+<<<<<<< HEAD
         if user is None and emp.get("Email"):
             # Login row exists but isn't linked by EmployeeID (or the link got lost): find it by email.
             user = find_one("Users", "Email", emp["Email"])
@@ -592,6 +659,15 @@ def reset_employee_password(employee_id: str, body: AdminPasswordReset):
         updates["TokenVersion"] = str(next_token_version(user))
     try:
         update_row("Users", user["ID"], updates)
+=======
+    except SheetError as e:
+        _handle_sheet_error(e)
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No login account linked to this employee")
+
+    try:
+        update_row("Users", user["ID"], {"PasswordHash": hash_password(body.new_temp_password)})
+>>>>>>> f39b002157dba8453156debd9704189418f3fdd6
     except SheetError as e:
         _handle_sheet_error(e)
     return {"message": "Password reset. Share the new temporary password with the employee directly."}
