@@ -87,7 +87,22 @@ export default function Profile() {
     }
   }
 
-  if (!profile && !error) return <p>Loading…</p>
+  if (!profile && !error) {
+    return (
+      <div role="status" aria-live="polite">
+        <span className="sr-only">Loading…</span>
+        <div className="page-header"><h1>My Profile</h1></div>
+        <div className="panel">
+          <div className="skel skel-title" />
+          <div className="photo-picker"><div className="skel" style={{ width: 96, height: 96, borderRadius: '50%', margin: 0 }} /><div className="skel" style={{ width: 220, height: 34, borderRadius: 99, margin: 0 }} /></div>
+        </div>
+        <div className="panel">
+          <div className="skel skel-title" />
+          <div className="grid-2">{Array.from({ length: 6 }, (_, i) => <div key={i} className="skel skel-field" />)}</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>

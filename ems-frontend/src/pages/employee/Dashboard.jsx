@@ -6,15 +6,9 @@ import StatusPill from '../../components/StatusPill'
 import Icon from '../../components/Icon'
 import { fmtTime, fmtDateTime, fmtDate } from '../../utils/time'
 
-const GOAL_MINUTES = 8 * 60
-const minutesOf = (s) => {
-  const m = /(?:(\d+)h)?\s*(?:(\d+)m)?/.exec(s || '')
-  return m ? (Number(m[1] || 0) * 60 + Number(m[2] || 0)) : 0
-}
-
 function Confetti() {
   const bits = Array.from({ length: 26 }, (_, i) => i)
-  const colors = ['#06b6d4', '#22d3ee', '#ff6b57', '#ffb199', '#67e8f9']
+  const colors = ['#e8620c', '#ff9a55', '#ffd2b0', '#231d18', '#cf5509']
   return (
     <div className="confetti" aria-hidden="true">
       {bits.map((i) => (
@@ -24,17 +18,13 @@ function Confetti() {
   )
 }
 
-function Ring({ minutes, live }) {
-  const pct = Math.min(1, minutes / GOAL_MINUTES)
-  const C = 2 * Math.PI * 54
+function HoursCard({ today, finished }) {
+  const live = Boolean(today?.inProgress)
   return (
-    <div className="ring" role="img" aria-label={`${Math.round(pct * 100)}% of the 8 hour day`}>
-      <svg viewBox="0 0 128 128">
-        <defs><linearGradient id="ringGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#22d3ee" /><stop offset="1" stopColor="#0891b2" /></linearGradient></defs>
-        <circle cx="64" cy="64" r="54" className="ring-track" />
-        <circle cx="64" cy="64" r="54" className={`ring-bar ${live ? 'is-live' : ''}`} strokeDasharray={C} strokeDashoffset={C * (1 - pct)} />
-      </svg>
-      <div className="ring-text"><b>{Math.round(pct * 100)}%</b><span>of 8h day</span></div>
+    <div className="hours-card">
+      <div className="hours-label">{live && <span className="live-dot" aria-hidden="true" />}{finished ? 'Worked today' : 'Worked so far'}</div>
+      <div className="hours-value">{today?.workingHours || '—'}</div>
+      <div className="hours-sub">{live ? 'Currently checked in' : finished ? 'Checked out for the day' : 'Not checked in yet'}</div>
     </div>
   )
 }
@@ -101,7 +91,7 @@ export default function Dashboard() {
       {party > 0 && <Confetti key={party} />}
       <div className="page-header hero">
         <div>
-          <h1>{greeting(now.getHours())}, {user?.name?.split(' ')[0] || 'there'} 👋</h1>
+          <h1>{greeting(now.getHours())}, {user?.name?.split(' ')[0] || 'there'}</h1>
           <div className="clock">
             <Icon name="calendar" size={14} />
             {now.toLocaleDateString('en-GB', { weekday: 'long' })}, {fmtDate(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`)}
@@ -118,24 +108,19 @@ export default function Dashboard() {
           {today && <StatusPill status={today.status} />}
         </div>
         <div className="today-grid">
-        <Ring minutes={minutesOf(today?.workingHours)} live={Boolean(today?.inProgress)} />
-        <div className="grid-3">
-          <div className="stat">
-            <span className="stat-icon"><Icon name="login" size={18} /></span>
-            <div className="value">{today?.checkIn ? fmtTime(today.checkIn) : '—'}</div>
-            <div className="label">Check-in</div>
+          <HoursCard today={today} finished={hasCheckedOut} />
+          <div className="grid-2">
+            <div className="stat">
+              <span className="stat-icon"><Icon name="login" size={18} /></span>
+              <div className="value">{today?.checkIn ? fmtTime(today.checkIn) : '—'}</div>
+              <div className="label">Check-in</div>
+            </div>
+            <div className="stat">
+              <span className="stat-icon"><Icon name="logout" size={18} /></span>
+              <div className="value">{today?.checkOut ? fmtTime(today.checkOut) : '—'}</div>
+              <div className="label">Check-out</div>
+            </div>
           </div>
-          <div className="stat">
-            <span className="stat-icon"><Icon name="logout" size={18} /></span>
-            <div className="value">{today?.checkOut ? fmtTime(today.checkOut) : '—'}</div>
-            <div className="label">Check-out</div>
-          </div>
-          <div className="stat">
-            <span className="stat-icon"><Icon name="clock" size={18} /></span>
-            <div className="value">{today?.workingHours || '—'}</div>
-            <div className="label">{hasCheckedOut ? 'Working hours today' : 'Working hours so far'}</div>
-          </div>
-        </div>
         </div>
         <div className="toolbar">
           <button className="btn btn-primary" onClick={handleCheckIn} disabled={busy || hasCheckedIn}><Icon name="login" size={16} />Check In</button>

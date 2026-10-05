@@ -32,6 +32,12 @@ export default function Employees() {
   const toast = useToast()
   const [employees, setEmployees] = useState([])
   const [departments, setDepartments] = useState([])
+  const [deptError, setDeptError] = useState('')
+  const [showDepts, setShowDepts] = useState(false)
+  const [allDepts, setAllDepts] = useState([])
+  const [newDept, setNewDept] = useState({ name: '', description: '' })
+  const [deptFormError, setDeptFormError] = useState('')
+  const [deptBusy, setDeptBusy] = useState(false)
   const [error, setError] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [createForm, setCreateForm] = useState(emptyCreateForm)
@@ -61,9 +67,49 @@ export default function Employees() {
   useEffect(() => {
     api.get('/api/admin/photos').then((p) => setPhotos(p || {})).catch(() => setPhotos({}))
   }, [])
-  useEffect(() => {
-    api.get('/api/admin/departments').then(setDepartments).catch(() => setDepartments([]))
+  const loadDepartments = useCallback(() => {
+    setDeptError('')
+    return api.get('/api/admin/departments').then(setDepartments).catch((err) => { setDepartments([]); setDeptError(err.message) })
   }, [])
+  useEffect(() => { loadDepartments() }, [loadDepartments])
+
+  async function openDeptManager() {
+    setShowDepts(true)
+    setDeptFormError('')
+    try { setAllDepts(await api.get('/api/admin/departments', { include_inactive: true })) } catch (err) { setDeptFormError(err.message) }
+  }
+
+  async function handleAddDept(e) {
+    e.preventDefault()
+    if (!newDept.name.trim()) return
+    setDeptBusy(true)
+    setDeptFormError('')
+    try {
+      await api.post('/api/admin/departments', { name: newDept.name.trim(), description: newDept.description.trim() })
+      setNewDept({ name: '', description: '' })
+      setAllDepts(await api.get('/api/admin/departments', { include_inactive: true }))
+      await loadDepartments()
+      toast('Department added')
+    } catch (err) {
+      setDeptFormError(err.message)
+    } finally {
+      setDeptBusy(false)
+    }
+  }
+
+  async function handleToggleDept(d) {
+    setDeptBusy(true)
+    setDeptFormError('')
+    try {
+      await api.patch(`/api/admin/departments/${d.ID}/toggle-active`)
+      setAllDepts(await api.get('/api/admin/departments', { include_inactive: true }))
+      await loadDepartments()
+    } catch (err) {
+      setDeptFormError(err.message)
+    } finally {
+      setDeptBusy(false)
+    }
+  }
 
   function isActive(e) {
     return String(e.IsActive).toUpperCase() === 'TRUE' || e.IsActive === true
@@ -177,6 +223,7 @@ export default function Employees() {
       <div className="panel">
         <div className="toolbar">
           <div style={{ flex: 1 }} />
+          <button className="btn btn-secondary" onClick={openDeptManager}>Departments</button>
           <button className="btn btn-primary" onClick={() => { setCreateForm(emptyCreateForm); setCreateError(''); setShowCreate(true) }}>Add Employee</button>
         </div>
         <div className="table-wrap">
@@ -197,7 +244,7 @@ export default function Employees() {
                     <td>{e.Designation}</td>
                     <td>{e.DepartmentName || e.DepartmentID}</td>
                     <td><StatusPill status={isActive(e) ? 'Present' : 'Absent'} />
-                      <span style={{ marginLeft: 6, fontSize: 12.5, color: 'var(--muted)' }}>{isActive(e) ? 'Active' : 'Inactive'}</span>
+                      <span style={{ marginLeft: 6, fontSize: 12.5, color: 'var(--ink-soft)' }}>{isActive(e) ? 'Active' : 'Inactive'}</span>
                     </td>
                     <td className="row-actions">
                       <button className="btn btn-secondary btn-sm" onClick={() => openEdit(e)}>Edit</button>
@@ -217,6 +264,31 @@ export default function Employees() {
         </div>
       </div>
 
+      {showDepts && (
+        <Modal title="Departments" onClose={() => setShowDepts(false)}>
+          {deptFormError && <div className="banner banner-error">{deptFormError}</div>}
+          {allDepts.length ? (
+            <ul className="dept-list">
+              {allDepts.map((d) => (
+                <li key={d.ID} className={d.IsActive ? '' : 'is-off'}>
+                  <div className="dept-name">{d.Name}{d.Description && <small>{d.Description}</small>}</div>
+                  <button className={`btn btn-sm ${d.IsActive ? 'btn-secondary' : 'btn-primary'}`} disabled={deptBusy} onClick={() => handleToggleDept(d)}>
+                    {d.IsActive ? 'Hide' : 'Show'}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="hint-text">No departments yet — add your first one below.</p>
+          )}
+          <form className="dept-add" onSubmit={handleAddDept}>
+            <div className="field"><label>New department</label><input required placeholder="e.g. Engineering" value={newDept.name} onChange={(e) => setNewDept({ ...newDept, name: e.target.value })} /></div>
+            <div className="field"><label>Description (optional)</label><input placeholder="What this team does" value={newDept.description} onChange={(e) => setNewDept({ ...newDept, description: e.target.value })} /></div>
+            <button className="btn btn-primary btn-block" type="submit" disabled={deptBusy}>Add department</button>
+          </form>
+        </Modal>
+      )}
+
       {showCreate && (
         <Modal title="Add employee" onClose={() => setShowCreate(false)}>
           {createError && <div className="banner banner-error">{createError}</div>}
@@ -231,7 +303,7 @@ export default function Employees() {
             </div>
             <div className="field-row">
               <div className="field"><label>Designation</label><input value={createForm.designation} onChange={(e) => setCreateForm({ ...createForm, designation: e.target.value })} /></div>
-              <div className="field"><label>Department</label><DepartmentSelect departments={departments} value={createForm.departmentId} onChange={(v) => setCreateForm({ ...createForm, departmentId: v })} /></div>
+              <div className="field"><label>Department</label><DepartmentSelect departments={departments} value={createForm.departmentId} onChange={(v) => setCreateForm({ ...createForm, departmentId: v })} />{deptError && <small style={{ color: "#b91c1c" }}>Departments failed to load: {deptError}</small>}{!deptError && departments.length === 0 && <small>No departments found in the Departments sheet.</small>}</div>
             </div>
             <div className="field-row">
               <div className="field"><label>Role title</label><input value={createForm.roleTitle} onChange={(e) => setCreateForm({ ...createForm, roleTitle: e.target.value })} /></div>

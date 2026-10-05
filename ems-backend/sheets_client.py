@@ -11,6 +11,7 @@ Design notes:
   the free quota and keep latency predictable.
 """
 import logging
+import re
 import socket
 import ssl
 import threading
@@ -77,6 +78,26 @@ DATETIME_COLUMNS = {
     "Users": ["CreatedAt"],
     "Notifications": ["CreatedAt"],
 }
+
+
+# Canonical header names. A header typed as "Employee ID", "employeeid", "PasswordHash " (trailing
+# space) etc. is mapped back to the canonical spelling, so a slightly-off header in the sheet
+# no longer silently breaks lookups (the usual cause of "Invalid email or password" and
+# "no login account linked" after creating an employee).
+_KNOWN_HEADERS = [
+    "ID", "Email", "PasswordHash", "Role", "EmployeeID", "IsActive", "CreatedAt", "TokenVersion",
+    "EmployeeCode", "Name", "Phone", "DOB", "Designation", "DepartmentID", "RoleTitle", "Address",
+    "JoinedDate", "Description", "AttendanceDate", "CheckIn", "CheckOut", "Status", "EditedBy",
+    "ClientName", "ProjectName", "Priority", "Remarks", "TaskDate", "AdminStatus", "AdminRemarks",
+    "UpdatedAt", "LeaveType", "FromDate", "ToDate", "Reason", "ReviewedBy", "Date", "Type",
+    "Message", "RelatedID", "IsRead", "Photo",
+]
+_CANON = {re.sub(r"[^a-z0-9]", "", h.lower()): h for h in _KNOWN_HEADERS}
+
+
+def _canon_header(h: Any) -> str:
+    h = str(h).strip()
+    return _CANON.get(re.sub(r"[^a-z0-9]", "", h.lower()), h)
 
 
 class SheetError(Exception):
@@ -173,7 +194,7 @@ def _read_sheet_uncached(sheet_name: str) -> list[dict[str, Any]]:
             f"Sheet '{sheet_name}' is empty — it needs at least a header row."
         )
 
-    headers = values[0]
+    headers = [_canon_header(h) for h in values[0]]
     if not any(h.strip() for h in headers):
         raise SheetError(f"Sheet '{sheet_name}' has a blank header row.")
 
@@ -279,14 +300,19 @@ def get_headers(sheet_name: str) -> list[str]:
     values = result.get("values", [])
     if not values or not values[0]:
         raise SheetError(f"Sheet '{sheet_name}' has no header row.")
-    return values[0]
+    return [_canon_header(h) for h in values[0]]
 
 
 def find_one(sheet_name: str, column: str, value: Any) -> Optional[dict[str, Any]]:
-    """Return the first row where row[column] == str(value), or None."""
-    target = str(value)
+    """Return the first row where row[column] == str(value), or None.
+    Values are compared trimmed; Email is also compared case-insensitively."""
+    target = str(value).strip()
+    ci = column == "Email"
+    if ci:
+        target = target.lower()
     for row in all_rows(sheet_name):
-        if str(row.get(column, "")) == target:
+        cell = str(row.get(column, "")).strip()
+        if (cell.lower() if ci else cell) == target:
             return row
     return None
 

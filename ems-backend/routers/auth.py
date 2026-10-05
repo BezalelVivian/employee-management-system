@@ -17,15 +17,20 @@ limiter = Limiter(key_func=get_remote_address)
 @limiter.limit("10/minute")  # basic brute-force protection
 def login(request: Request, body: LoginRequest):
     try:
-        user = find_one("Users", "Email", body.email)
+        user = find_one("Users", "Email", str(body.email).strip())
     except SheetError as e:
         logger.error("Sheets error during login: %s", e)
         raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Could not reach the datastore")
 
     if user is None or str(user.get("IsActive", "")).strip().upper() not in ("TRUE", "1", "YES"):
+        logger.warning("Login failed for %s: %s", body.email,
+                       "no Users row with that Email" if user is None else "IsActive is not TRUE")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
-    if not verify_password(body.password, user.get("PasswordHash", "")):
+    if not verify_password(body.password, str(user.get("PasswordHash", "")).strip()):
+        logger.warning("Login failed for %s: %s", body.email,
+                       "PasswordHash cell is empty" if not str(user.get("PasswordHash", "")).strip()
+                       else "password does not match hash")
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
 
     role = user.get("Role", "")

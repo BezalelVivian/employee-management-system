@@ -1,4 +1,4 @@
-
+﻿
 # Frontend dependencies
 node_modules/
 dist/
@@ -26,3 +26,6 @@ __pycache__/
 .idea/
 .DS_Store
 Thumbs.db
+node_modules/
+dist/
+.env

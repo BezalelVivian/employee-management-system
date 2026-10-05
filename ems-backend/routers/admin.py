@@ -2,6 +2,7 @@ import logging
 from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from pydantic import BaseModel, Field
 
 from attendance import build_days, approved_leave_days
 from auth import require_admin, hash_password, next_token_version
@@ -158,21 +159,65 @@ def get_admin_dashboard():
     }
 
 
-# ---------- Departments (read-only) ----------
+# ---------- Departments ----------
+
+class DepartmentCreate(BaseModel):
+    name: str = Field(..., min_length=1, max_length=100)
+    description: str = Field("", max_length=200)
+
+
+def _dept_is_off(r: dict) -> bool:
+    return str(r.get("IsActive", "")).strip().upper() in ("FALSE", "0", "NO", "INACTIVE", "N")
+
 
 @router.get("/departments")
-def list_departments():
-    """Active departments for the dropdowns (ID, Name, Description)."""
+def list_departments(include_inactive: bool = Query(False)):
+    """Departments for the dropdowns (active only), or all of them for the manager (include_inactive=true)."""
     try:
         rows = all_rows("Departments")
     except SheetError as e:
         _handle_sheet_error(e)
-    return [
-        {"ID": r.get("ID"), "Name": r.get("Name") or r.get("DepartmentName") or r.get("ID"),
-         "Description": r.get("Description", "")}
-        for r in rows
-        if str(r.get("IsActive", "TRUE")).strip().upper() in ("TRUE", "1", "YES", "")
-    ]
+    out = []
+    for r in rows:
+        did = str(r.get("ID") or r.get("DepartmentID") or "").strip()
+        name = str(r.get("Name") or r.get("DepartmentName") or "").strip()
+        if not did and not name:
+            continue  # blank row
+        off = _dept_is_off(r)
+        if off and not include_inactive:
+            continue
+        out.append({"ID": did or name, "Name": name or did, "Description": r.get("Description", ""), "IsActive": not off})
+    return out
+
+
+@router.post("/departments", status_code=status.HTTP_201_CREATED)
+def add_department(body: DepartmentCreate):
+    """Add a department from the app -- the ID is generated for you, nothing to type in the sheet."""
+    name = body.name.strip()
+    if not name:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Department name is required")
+    try:
+        if any(str(r.get("Name", "")).strip().lower() == name.lower() for r in all_rows("Departments", fresh=True)):
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="That department already exists")
+        dept_id = next_id("Departments")
+        append_row("Departments", {"ID": dept_id, "Name": name, "Description": body.description.strip(), "IsActive": "TRUE"})
+    except SheetError as e:
+        _handle_sheet_error(e)
+    return {"message": "Department added", "ID": dept_id}
+
+
+@router.patch("/departments/{dept_id}/toggle-active")
+def toggle_department(dept_id: str):
+    """Switch a department on/off. Off = hidden from the dropdowns; employees already in it keep it."""
+    try:
+        row = find_by_id("Departments", dept_id)
+        if row is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Department not found")
+        now_off = not _dept_is_off(row)
+        update_row("Departments", dept_id, {"IsActive": "FALSE" if now_off else "TRUE"})
+    except SheetError as e:
+        _handle_sheet_error(e)
+    return {"message": "Department updated", "IsActive": not now_off}
 
 
 # ---------- Employees ----------
@@ -523,12 +568,26 @@ def reset_employee_password(employee_id: str, body: AdminPasswordReset):
 
     try:
         user = find_one("Users", "EmployeeID", employee_id)
+        if user is None and emp.get("Email"):
+            # Login row exists but isn't linked by EmployeeID (or the link got lost): find it by email.
+            user = find_one("Users", "Email", emp["Email"])
+            if user is not None:
+                update_row("Users", user["ID"], {"EmployeeID": employee_id})
+        if user is None:
+            # No login at all (employee was created but the Users row is missing/broken): create it now.
+            if not emp.get("Email"):
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                                    detail="This employee has no email, so a login can't be created")
+            append_row("Users", {
+                "ID": next_id("Users"), "Email": emp["Email"],
+                "PasswordHash": hash_password(body.new_temp_password), "Role": "employee",
+                "EmployeeID": employee_id, "IsActive": "TRUE", "CreatedAt": to_iso(now()),
+            })
+            return {"message": "Login account created and password set"}
     except SheetError as e:
         _handle_sheet_error(e)
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No login account linked to this employee")
 
-    updates = {"PasswordHash": hash_password(body.new_temp_password)}
+    updates = {"PasswordHash": hash_password(body.new_temp_password), "IsActive": "TRUE"}
     if "TokenVersion" in user:  # log the employee out of every existing session
         updates["TokenVersion"] = str(next_token_version(user))
     try:

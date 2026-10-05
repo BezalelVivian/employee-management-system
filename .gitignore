@@ -1,4 +1,4 @@
-# Python
+﻿# Python
 __pycache__/
 *.py[cod]
 *.pyo
@@ -28,3 +28,16 @@ Thumbs.db
 
 # Logs
 *.log
+# Secrets / credentials
+service-account-key.json
+*-key.json
+*credentials*.json
+*.pem
+
+# Node / frontend
+node_modules/
+dist/
+build/
+*.log
+
+.git-old/
