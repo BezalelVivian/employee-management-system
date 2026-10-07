@@ -11,6 +11,7 @@ Design notes:
   the free quota and keep latency predictable.
 """
 import logging
+import os
 import re
 import socket
 import ssl
@@ -55,7 +56,12 @@ RETRYABLE_HTTP_STATUSES = {429, 500, 502, 503, 504}
 # and this app's pages each read several sheets on every navigation, plus the
 # frontend sometimes fires duplicate requests — a short cache absorbs both without
 # making the data noticeably stale for an internal EMS tool.
-SHEET_CACHE_TTL_SECONDS = 8
+# Configurable so a serverless host (several instances, each with its own cache) can use a longer
+# value to stay inside the quota: set SHEET_CACHE_TTL_SECONDS in the environment. Default 8.
+try:
+    SHEET_CACHE_TTL_SECONDS = max(1, int(os.environ.get("SHEET_CACHE_TTL_SECONDS", "8")))
+except ValueError:
+    SHEET_CACHE_TTL_SECONDS = 8
 
 _sheet_cache: dict[str, tuple[float, list[dict[str, Any]]]] = {}
 _sheet_cache_lock = threading.Lock()

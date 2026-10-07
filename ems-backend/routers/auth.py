@@ -1,4 +1,5 @@
 import logging
+import os
 
 from fastapi import APIRouter, HTTPException, Request, status
 from slowapi import Limiter
@@ -10,7 +11,25 @@ from sheets_client import find_one, SheetError
 
 logger = logging.getLogger("ems.auth")
 router = APIRouter(tags=["auth"])
-limiter = Limiter(key_func=get_remote_address)
+
+
+def client_ip(request: Request) -> str:
+    """Who is calling, for the login rate limit.
+
+    On Vercel every request reaches the app through Vercel's proxy, so the socket address is
+    the same for everybody and the limit would apply to ALL employees together. Vercel sets
+    x-forwarded-for / x-vercel-forwarded-for to the real client IP and overwrites any value the
+    client sends, so it is safe to trust -- but only when actually running on Vercel (the VERCEL
+    env var), otherwise anyone could spoof the header. On Render/local we keep the socket
+    address (Render uses uvicorn --proxy-headers, see the README)."""
+    if os.environ.get("VERCEL"):
+        header = request.headers.get("x-vercel-forwarded-for") or request.headers.get("x-forwarded-for")
+        if header:
+            return header.split(",")[0].strip()
+    return get_remote_address(request)
+
+
+limiter = Limiter(key_func=client_ip)
 
 
 @router.post("/login", response_model=TokenResponse)
