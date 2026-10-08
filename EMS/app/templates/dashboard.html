@@ -1,0 +1,336 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<section class="hero">
+  <div>
+    <p class="eyebrow">Today</p>
+
+    <h2>
+      Hi, {{ employee.name.split(' ')[0] }} 👋
+    </h2>
+
+    <p class="muted">
+      Here’s your workday at a glance.
+    </p>
+  </div>
+
+  <div class="hero-clock">
+    <span>Current time</span>
+    <strong id="heroClock">--:--:--</strong>
+  </div>
+</section>
+
+
+<div class="grid four">
+
+  <div class="stat">
+    <span>Attendance</span>
+
+    <strong>
+      {{ attendance.status if attendance else 'Absent' }}
+    </strong>
+
+    <i class="fa-solid fa-user-check"></i>
+  </div>
+
+
+  <div class="stat">
+    <span>Check In</span>
+
+    <strong>
+      {{
+        attendance.check_in.strftime('%I:%M %p')
+        if attendance and attendance.check_in
+        else '--'
+      }}
+    </strong>
+
+    <i class="fa-solid fa-arrow-right-to-bracket"></i>
+  </div>
+
+
+  <div class="stat">
+    <span>Check Out</span>
+
+    <strong>
+      {{
+        attendance.check_out.strftime('%I:%M %p')
+        if attendance and attendance.check_out
+        else '--'
+      }}
+    </strong>
+
+    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+  </div>
+
+
+  <div class="stat">
+    <span>Working Hours</span>
+
+    <strong id="workingHours">
+
+      {% if attendance and attendance.working_hours %}
+
+        {{ attendance.working_hours }}
+
+      {% elif attendance and attendance.check_in and not attendance.check_out %}
+
+        In progress
+
+      {% else %}
+
+        --
+
+      {% endif %}
+
+    </strong>
+
+    <i class="fa-solid fa-hourglass-half"></i>
+  </div>
+
+</div>
+
+
+<div class="panel">
+
+  <div class="panel-head">
+    <div>
+      <h3>Quick Actions</h3>
+
+      <p class="muted">
+        Common actions for your workday.
+      </p>
+    </div>
+  </div>
+
+
+  <div class="actions">
+
+    {% if not attendance %}
+
+      <form method="post" action="/attendance/check-in">
+
+        <input
+          type="hidden"
+          name="csrf"
+          value="{{ csrf }}"
+        />
+
+        <button
+          class="action primary"
+          type="submit"
+        >
+          <i class="fa-solid fa-right-to-bracket"></i>
+
+          <b>Check In</b>
+
+          <small>Start your day</small>
+        </button>
+
+      </form>
+
+    {% elif not attendance.check_out %}
+
+      <button
+        class="action disabled"
+        type="button"
+        disabled
+      >
+        <i class="fa-solid fa-check"></i>
+
+        <b>Checked In</b>
+
+        <small>
+          {{ attendance.check_in.strftime('%I:%M %p') }}
+        </small>
+      </button>
+
+    {% else %}
+
+      <button
+        class="action disabled"
+        type="button"
+        disabled
+      >
+        <i class="fa-solid fa-circle-check"></i>
+
+        <b>Checked Out</b>
+
+        <small>Today completed</small>
+      </button>
+
+    {% endif %}
+
+
+    {% if attendance and attendance.check_in and not attendance.check_out %}
+
+      <form method="post" action="/attendance/check-out">
+
+        <input
+          type="hidden"
+          name="csrf"
+          value="{{ csrf }}"
+        />
+
+        <button
+          class="action danger"
+          type="submit"
+        >
+          <i class="fa-solid fa-right-from-bracket"></i>
+
+          <b>Check Out</b>
+
+          <small>End your day</small>
+        </button>
+
+      </form>
+
+    {% else %}
+
+      <button
+        class="action disabled"
+        type="button"
+        disabled
+      >
+        <i class="fa-solid fa-right-from-bracket"></i>
+
+        <b>Check Out</b>
+
+        <small>
+          Check in first
+        </small>
+      </button>
+
+    {% endif %}
+
+
+    <a
+      class="action"
+      href="/leave"
+    >
+      <i class="fa-solid fa-calendar-plus"></i>
+
+      <b>Apply Leave</b>
+
+      <small>Request time off</small>
+    </a>
+
+
+    <a
+      class="action"
+      href="/tasks"
+    >
+      <i class="fa-solid fa-list-check"></i>
+
+      <b>Submit Task</b>
+
+      <small>Record your work</small>
+    </a>
+
+  </div>
+
+</div>
+
+
+<div class="grid two">
+
+  <div class="panel">
+
+    <div class="panel-head">
+
+      <div>
+        <h3>Recent Activity</h3>
+
+        <p class="muted">
+          Your latest actions.
+        </p>
+      </div>
+
+    </div>
+
+
+    {% if activities %}
+
+      <div class="timeline">
+
+        {% for label, when in activities %}
+
+          <div class="timeline-item">
+
+            <span class="dot"></span>
+
+            <div>
+              <b>{{ label }}</b>
+
+              <small>
+                {{ when }}
+              </small>
+            </div>
+
+          </div>
+
+        {% endfor %}
+
+      </div>
+
+    {% else %}
+
+      <div class="empty">
+        No recent activity yet.
+      </div>
+
+    {% endif %}
+
+  </div>
+
+
+  <div class="panel">
+
+    <div class="panel-head">
+
+      <div>
+        <h3>Work Snapshot</h3>
+
+        <p class="muted">
+          Your current workload.
+        </p>
+      </div>
+
+    </div>
+
+
+    <div class="mini-grid">
+
+      <div>
+        <span>Total tasks</span>
+
+        <strong>
+          {{ task_count }}
+        </strong>
+      </div>
+
+
+      <div>
+        <span>Pending leave</span>
+
+        <strong>
+          {{ pending_leaves }}
+        </strong>
+      </div>
+
+    </div>
+
+
+    <a
+      class="text-link"
+      href="/tasks"
+    >
+      View task history →
+    </a>
+
+  </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'base.html' %}{% block content %}
+<section class="panel">
+  <div class="panel-head">
+    <div>
+      <h3>Employees</h3>
+      <p class="muted">Create and manage workforce accounts.</p>
+    </div>
+  </div>
+  <form class="filters" method="get">
+    <input
+      name="search"
+      value="{{ search }}"
+      placeholder="Search name, employee ID or email"
+    /><button class="btn">Search</button>
+  </form>
+  <details class="drawer">
+    <summary class="btn primary">+ Add Employee</summary>
+    <form
+      method="post"
+      action="/admin/employees/create"
+      class="form-grid compact"
+    >
+      <input type="hidden" name="csrf" value="{{ csrf }}" /><label
+        >Employee ID<input name="employee_code" required /></label
+      ><label>Name<input name="name" required /></label
+      ><label>Email<input type="email" name="email" required /></label
+      ><label
+        >Temporary Password<input
+          type="password"
+          name="password"
+          required
+          minlength="8" /></label
+      ><label>Phone<input name="phone" /></label
+      ><label>Designation<input name="designation" /></label
+      ><label
+        >Department<select name="department_id">
+          <option value="">Select</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}">{{ d.name }}</option>
+          {% endfor %}
+        </select></label
+      ><label>Role Title<input name="role_title" value="Employee" /></label
+      ><label>Joined Date<input type="date" name="joined_date" /></label>
+      <div class="span-2">
+        <button class="btn primary">Create Employee</button>
+      </div>
+    </form>
+  </details>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Department</th>
+          <th>Designation</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in employees %}
+        <tr>
+          <td>{{ e.employee_code }}</td>
+          <td>{{ e.name }}</td>
+          <td>{{ e.email }}</td>
+          <td>{{ e.department.name if e.department else '-' }}</td>
+          <td>{{ e.designation or '-' }}</td>
+          <td>
+            <span class="badge {{ 'approved' if e.is_active else 'rejected' }}"
+              >{{ 'Active' if e.is_active else 'Inactive' }}</span
+            >
+          </td>
+          <td>
+            <form method="post" action="/admin/employees/{{ e.id }}/toggle">
+              <input type="hidden" name="csrf" value="{{ csrf }}" /><button
+                class="btn small"
+              >
+                {{ 'Deactivate' if e.is_active else 'Activate' }}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="empty">No employees found.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
