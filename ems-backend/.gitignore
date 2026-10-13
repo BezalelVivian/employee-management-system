@@ -1,0 +1,36 @@
+venv/
+__pycache__/
+*.pyc
+.env
+service-account-key.json
+
+# Python virtual environment
+venv/
+backend/venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+service-account-key.json
+service-account.json
+credentials/
+*.pem
+*.key
+
+# Frontend dependencies and build output
+frontend/node_modules/
+frontend/dist/
+
+# Logs
+*.log
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

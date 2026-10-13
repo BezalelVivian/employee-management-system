@@ -1,0 +1,13 @@
+# Keep the deployment small: none of this is needed to run the API.
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+tests/
+.env
+.env.*
+!.env.example
+check_sheets.py
+setup_sheets.py
+run.py
