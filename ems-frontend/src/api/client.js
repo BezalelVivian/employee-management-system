@@ -6,6 +6,15 @@ const BASE_URL = (import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? 'h
 
 const TOKEN_KEY = 'ems_token'
 
+// Shown to employees instead of raw Google/server text. The real detail goes to the console only.
+const MSG_BUSY = 'The system is busy right now. Please try again in a moment.'
+const MSG_TOO_MANY = 'Too many attempts. Please wait a minute and try again.'
+const MSG_OFFLINE = 'Could not reach the server. Check your connection and try again.'
+
+// A wrong "current password" is a normal form error, never a dead session, even if some
+// server version still answers it with a 401.
+const NEVER_LOGOUT_PATHS = ['/api/employee/password', '/api/employee/change-password']
+
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY)
 }
@@ -49,8 +58,9 @@ async function request(path, { method = 'GET', body, params, auth = true } = {})
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })
-  } catch {
-    throw new ApiError('Could not reach the server. Check your connection and try again.', 0)
+  } catch (err) {
+    console.error(`[api] ${method} ${path} -> network error`, err)
+    throw new ApiError(MSG_OFFLINE, 0)
   }
 
   // Only treat a 401 as "your session died" for requests that were actually
@@ -58,9 +68,10 @@ async function request(path, { method = 'GET', body, params, auth = true } = {})
   // returns 401 for a wrong password — that's a normal login failure, not an
   // expired session, and must not clear the token or redirect away from the
   // login page the user is already on.
-  if (res.status === 401 && auth) {
+  if (res.status === 401 && auth && !NEVER_LOGOUT_PATHS.some((p) => path.startsWith(p))) {
     clearToken()
-    window.location.href = '/login'
+    localStorage.removeItem('ems_user')
+    if (window.location.pathname !== '/login') window.location.href = '/login'
     throw new ApiError('Session expired, please log in again', 401)
   }
 
@@ -71,8 +82,19 @@ async function request(path, { method = 'GET', body, params, auth = true } = {})
   }
 
   if (!res.ok) {
-    const message = data?.message || data?.detail || data?.error?.message || 'Something went wrong'
-    throw new ApiError(typeof message === 'string' ? message : JSON.stringify(message), res.status)
+    const raw = data?.message || data?.detail || data?.error?.message || data?.error || text || ''
+    const rawText = typeof raw === 'string' ? raw : JSON.stringify(raw)
+    if (res.status === 429) {
+      console.error(`[api] ${method} ${path} -> 429`, rawText)
+      throw new ApiError(MSG_TOO_MANY, 429)
+    }
+    if (res.status >= 500) {
+      // 503s often carry raw Google Sheets text; 500s may carry anything. Keep it out of the UI.
+      console.error(`[api] ${method} ${path} -> ${res.status}`, rawText)
+      throw new ApiError(MSG_BUSY, res.status)
+    }
+    // 4xx messages are written for the user, so keep them.
+    throw new ApiError(rawText || 'Something went wrong', res.status)
   }
 
   return data

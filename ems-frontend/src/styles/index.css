@@ -368,7 +368,7 @@ table:has(td.row-actions) th:last-child { position: sticky; right: 0; z-index: 2
 @media (min-width: 1600px) { :root { --side-w: 284px; } .page-enter { max-width: 1400px; } .grid-2, .grid-3 { gap: 20px; } }
 @media (min-width: 2200px) { :root { --side-w: 308px; } body { font-size: 18px; } .page-enter { max-width: 1640px; } .modal { width: min(720px, 100%); } }
 @media (max-width: 1180px) { :root { --side-w: 240px; } }
-@media (max-width: 960px) {
+@media (max-width: 1100px) {
   html, body { background: var(--bg); }
   .sidebar { transform: translateX(-105%); transition: transform .3s var(--ease-out); width: min(320px, 86vw); border-radius: 0 30px 30px 0; } .sidebar.is-open { transform: none; box-shadow: 0 0 80px rgba(25,0,50,.65); }
   .icon-btn.sidebar-close { display: inline-grid; }
@@ -429,3 +429,36 @@ table:has(td.row-actions) th:last-child { position: sticky; right: 0; z-index: 2
   h1, h2, h3, td, .stat .value, .stat .label { color: #000; } th { background: #eee; color: #000; position: static; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } }
+
+/* ===== Mobile & tablet: cards instead of tables, bigger tap targets, punch bar ===== */
+@media (max-width: 1100px) {
+  .table-wrap { overflow: visible; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+  .table-wrap table, .table-wrap tbody, .table-wrap tr, .table-wrap td { display: block; width: 100%; }
+  /* header row stays in the DOM for screen readers, just not visible */
+  .table-wrap thead { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .table-wrap tbody tr { margin-bottom: 12px; padding: 4px 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); box-shadow: var(--shadow-1); }
+  .table-wrap tbody tr:hover { background: var(--card); }
+  .table-wrap tbody tr td { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: auto; min-height: 44px; padding: 10px 0; border-top: 1px solid var(--line); white-space: normal; text-align: right; overflow-wrap: anywhere; font-size: 14px; }
+  .table-wrap tbody tr td:first-child { border-top: 0; }
+  .table-wrap td::before { content: attr(data-label); flex: 0 0 auto; max-width: 42%; text-align: left; font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-soft); overflow-wrap: normal; }
+  .table-wrap td[data-label=""]::before, .table-wrap td:not([data-label])::before { display: none; }
+  .table-wrap td.row-actions { position: static; box-shadow: none; background: transparent; flex-wrap: wrap; justify-content: stretch; gap: 8px; padding: 12px 0 10px; }
+  .table-wrap tbody tr:hover td.row-actions { background: transparent; }
+  .table-wrap td.row-actions > .btn { flex: 1 1 0; min-width: calc(50% - 4px); min-height: 44px; margin: 0; }
+}
+
+/* 44px minimum tap targets on touch screens and small screens */
+@media (pointer: coarse), (max-width: 1100px) {
+  .btn, .btn-sm { min-height: 44px; }
+  .btn-block { min-height: 52px; }
+  .icon-btn { width: 44px; height: 44px; }
+  .input-action, .date-input-btn { width: 44px; height: 44px; }
+  .modal > .panel-title:first-child .btn { min-height: 44px; }
+  .field input, .field select, .toolbar input, .toolbar select, .toolbar .field input, .toolbar .field select { min-height: 44px; font-size: 16px; } /* 16px stops iOS zooming on focus */
+  .sidebar-nav a { min-height: 48px; }
+}
+
+/* Check In / Check Out bar at the top of the employee dashboard */
+.punch-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+.punch-bar .btn { min-height: 56px; font-size: 16px; width: 100%; }
+@media (max-width: 340px) { .punch-bar { grid-template-columns: 1fr; } }

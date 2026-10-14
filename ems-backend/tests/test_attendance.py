@@ -326,3 +326,19 @@ def test_holidays_admin_add_list_remove_and_notify(env):
     hid = client.get("/api/admin/holidays", headers=a).json()[0]["id"]
     assert client.delete(f"/api/admin/holidays/{hid}", headers=a).status_code == 200
     assert client.get("/api/admin/holidays", headers=a).json() == []
+
+
+def test_wrong_current_password_is_400_not_401(env):
+    """A wrong current password must be a normal form error. The app logs users out on any 401."""
+    client, store, login = env
+    h = login("bez@x.com", "secret1")
+    r = client.put("/api/employee/password", headers=h, json={"current_password": "nope-nope", "new_password": "newpass1"})
+    assert r.status_code == 400 and "incorrect" in r.json()["detail"].lower()
+    # the session is still valid afterwards
+    assert client.get("/api/employee/profile", headers=h).status_code == 200
+
+
+def test_checkin_locks_are_per_employee(env):
+    from routers import employee as emp_router
+    assert emp_router._attendance_lock_for("10") is emp_router._attendance_lock_for("10")
+    assert emp_router._attendance_lock_for("10") is not emp_router._attendance_lock_for("11")

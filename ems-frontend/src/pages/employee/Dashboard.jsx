@@ -100,6 +100,11 @@ export default function Dashboard() {
         <div className="hero-time" aria-label="Current time">{now.toLocaleTimeString()}</div>
       </div>
 
+      <div className="punch-bar">
+        <button className="btn btn-primary" onClick={handleCheckIn} disabled={busy || hasCheckedIn}><Icon name="login" size={18} />Check In</button>
+        <button className="btn btn-secondary" onClick={handleCheckOut} disabled={busy || !hasCheckedIn || hasCheckedOut}><Icon name="logout" size={18} />Check Out</button>
+      </div>
+
       {error && <div className="banner banner-error" role="alert">{error}</div>}
 
       <div className="panel">
@@ -123,8 +128,6 @@ export default function Dashboard() {
           </div>
         </div>
         <div className="toolbar">
-          <button className="btn btn-primary" onClick={handleCheckIn} disabled={busy || hasCheckedIn}><Icon name="login" size={16} />Check In</button>
-          <button className="btn btn-secondary" onClick={handleCheckOut} disabled={busy || !hasCheckedIn || hasCheckedOut}><Icon name="logout" size={16} />Check Out</button>
           <button className="btn btn-secondary" onClick={() => navigate('/leave?new=1')}><Icon name="sun" size={16} />Apply Leave</button>
           <button className="btn btn-secondary" onClick={() => navigate('/tasks?new=1')}><Icon name="plus" size={16} />Submit Task</button>
         </div>

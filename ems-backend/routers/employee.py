@@ -22,7 +22,18 @@ MAX_NOTIFICATIONS = 50  # newest first; keeps the response small however long so
 
 # Check-in / check-out are read-then-write. Serialize them (single Render instance) and read
 # fresh from the sheet, so a double click or two quick taps can never create a second row.
-_attendance_lock = threading.Lock()
+# One lock PER EMPLOYEE (not one global lock), so employees checking in at the same moment don't
+# queue behind each other's Google Sheets calls.
+_attendance_locks: dict[str, threading.Lock] = {}
+_attendance_locks_guard = threading.Lock()
+
+
+def _attendance_lock_for(emp_id: str) -> threading.Lock:
+    with _attendance_locks_guard:
+        lock = _attendance_locks.get(emp_id)
+        if lock is None:
+            lock = _attendance_locks[emp_id] = threading.Lock()
+        return lock
 
 logger = logging.getLogger("ems.employee")
 router = APIRouter(prefix="/api/employee", tags=["employee"])
@@ -189,7 +200,9 @@ def change_my_password(body: PasswordChange, current_user: dict = Depends(get_cu
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Account not found")
 
     if not verify_password(body.current_password, user.get("PasswordHash", "")):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Current password is incorrect")
+        # 400, not 401: a wrong current password is a form error, not an expired session
+        # (the app logs the user out on any 401).
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
 
     new_version = next_token_version(user)
     try:
@@ -222,7 +235,7 @@ def check_in(current_user: dict = Depends(get_current_user)):
     """One check-in per day. Flexible hours: we only record the time, we don't judge it."""
     emp_id = _my_employee_id(current_user)
     today = today_str()
-    with _attendance_lock:
+    with _attendance_lock_for(emp_id):
         try:
             todays = _todays_rows(emp_id, today)
             if any(r.get("CheckIn") for r in todays):
@@ -246,7 +259,7 @@ def check_out(current_user: dict = Depends(get_current_user)):
     """Check-out only works after today's check-in, and only once."""
     emp_id = _my_employee_id(current_user)
     today = today_str()
-    with _attendance_lock:
+    with _attendance_lock_for(emp_id):
         try:
             todays = _todays_rows(emp_id, today)
             row = next((r for r in todays if r.get("CheckIn")), None)
